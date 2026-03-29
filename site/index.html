@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>JSON Mate</title>
+		<meta
+			name="description"
+			content="JSON Mate 是一个更顺手的 JSON 浏览器扩展，支持查看、编辑、路径复制、值转换和独立 toolkit。"
+		/>
+		<link rel="stylesheet" href="styles.css" />
+	</head>
+	<body>
+		<header class="hero">
+			<div class="hero-copy">
+				<div class="brand-pill">
+					<span class="brand-mark">JM</span>
+					<span>JSON Mate</span>
+				</div>
+				<p class="eyebrow">Chrome JSON Viewer Extension</p>
+				<h1>让 JSON 的查看、编辑和转换真正顺手起来。</h1>
+				<p class="summary">
+					JSON Mate 把树形查看、路径定位、局部编辑、图片预览和文本转换整合到一套一致的
+					workspace 里。
+				</p>
+				<div class="hero-actions">
+					<a class="primary-link" href="https://github.com/etng/crxJsonMate/releases">Download release</a>
+					<a class="secondary-link" href="https://github.com/etng/crxJsonMate">View source</a>
+				</div>
+				<ul class="hero-meta">
+					<li>Strict SemVer releases</li>
+					<li>GitHub Releases packaging</li>
+					<li>English, 中文, 日本語</li>
+				</ul>
+			</div>
+			<div class="hero-panel">
+				<div class="workspace-card">
+					<div class="workspace-topbar">
+						<span class="dot teal"></span>
+						<span class="dot gold"></span>
+						<span class="dot dark"></span>
+					</div>
+					<div class="workspace-body">
+						<section class="tree-column">
+							<p class="mini-title">Tree</p>
+							<ul class="tree-preview">
+								<li><strong>exampleIsoTime</strong><span>2026-03-21T18:48:00Z</span></li>
+								<li><strong>exampleTimestampMs</strong><span>1774118880000</span></li>
+								<li><strong>exampleMultilineText</strong><span>Line 1\nLine 2\nLine 3</span></li>
+								<li><strong>productCatalog</strong><span>[...]</span></li>
+							</ul>
+						</section>
+						<section class="inspector-column">
+							<p class="mini-title">Workspace</p>
+							<div class="field-row">
+								<label>Path</label>
+								<div class="field-chip">productCatalog[0].price</div>
+							</div>
+							<div class="field-row">
+								<label>Value</label>
+								<div class="editor-card">$129.00</div>
+							</div>
+							<div class="tool-row">
+								<button>Copy</button>
+								<button>Timestamp to time</button>
+								<button>More</button>
+							</div>
+						</section>
+					</div>
+				</div>
+			</div>
+		</header>
+
+		<main class="page-shell">
+			<section class="feature-grid">
+				<article class="feature-card">
+					<h2>Context-aware workspace</h2>
+					<p>只把当前值适用的工具放到手边，减少误操作和界面噪音。</p>
+				</article>
+				<article class="feature-card">
+					<h2>Dedicated toolkit</h2>
+					<p>适合处理整段文本，支持搜索、最近使用和常见转换工作流。</p>
+				</article>
+				<article class="feature-card">
+					<h2>Polished editing</h2>
+					<p>字符串按真实值展示，key/value 编辑和撤销路径更清楚。</p>
+				</article>
+				<article class="feature-card">
+					<h2>Multi-language surfaces</h2>
+					<p>内置 English、简体中文、繁體中文、日本語，设置页、workspace、toolkit 与扩展卡片一起切换。</p>
+				</article>
+				<article class="feature-card">
+					<h2>Release-ready delivery</h2>
+					<p>发布包走 GitHub workflow，版本和资产命名始终可追踪。</p>
+				</article>
+			</section>
+
+			<section class="install-grid">
+				<div class="install-card">
+					<p class="section-tag">Install</p>
+					<h2>三种使用路径</h2>
+					<ul class="install-list">
+						<li>
+							<strong>Chrome Web Store</strong>
+							<span>推荐的最终分发方式，浏览器可自动更新。</span>
+						</li>
+						<li>
+							<strong>GitHub Releases</strong>
+							<span>下载 zip，手动加载已解压扩展。</span>
+						</li>
+						<li>
+							<strong>Load unpacked</strong>
+							<span>适合开发和调试。</span>
+						</li>
+					</ul>
+				</div>
+				<div class="install-card">
+					<p class="section-tag">Delivery</p>
+					<h2>获取与更新</h2>
+					<ul class="install-list">
+						<li>
+							<strong>Versioned releases</strong>
+							<span>所有公开构建都使用清晰的 SemVer 版本号，方便追踪和回退。</span>
+						</li>
+						<li>
+							<strong>GitHub Pages</strong>
+							<span>站点用于展示功能、安装方式和最新下载入口。</span>
+						</li>
+						<li>
+							<strong>Store-ready delivery</strong>
+							<span>后续可无缝接入 Chrome Web Store 与 Edge Add-ons 发布。</span>
+						</li>
+					</ul>
+				</div>
+			</section>
+		</main>
+	</body>
+</html>

@@ -1,0 +1,11 @@
+.DS_Store
+node_modules/
+.wxt/
+.output/
+dist/
+*.tsbuildinfo
+output/
+release/*.zip
+devtools/playwright/node_modules/
+devtools/playwright/browsers/
+devtools/playwright/npm-cache/

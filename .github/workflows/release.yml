@@ -1,0 +1,102 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release tag, for example v0.2.1'
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate package version
+        id: version
+        run: |
+          TAG_NAME="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name || github.ref_name }}"
+          PACKAGE_VERSION="$(node -e "const pkg = require('./package.json'); const version = pkg.version; if (!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(version)) { throw new Error('package.json version must follow x.y.z semver'); } process.stdout.write(version);")"
+          EXPECTED_TAG="v${PACKAGE_VERSION}"
+          if [ "${TAG_NAME}" != "${EXPECTED_TAG}" ]; then
+            echo "Tag ${TAG_NAME} does not match package version ${PACKAGE_VERSION}" >&2
+            exit 1
+          fi
+          echo "package_version=${PACKAGE_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "release_title=JSON Mate ${EXPECTED_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Package extension
+        id: package
+        run: |
+          chmod +x scripts/package-extension.sh
+          PACKAGE_PATH="$(./scripts/package-extension.sh)"
+          CHECKSUM_PATH="${PACKAGE_PATH}.sha256"
+          shasum -a 256 "$PACKAGE_PATH" > "$CHECKSUM_PATH"
+          echo "package_path=${PACKAGE_PATH}" >> "$GITHUB_OUTPUT"
+          echo "checksum_path=${CHECKSUM_PATH}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG_NAME="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name || github.ref_name }}"
+          gh release create "${TAG_NAME}" \
+            "${{ steps.package.outputs.package_path }}" \
+            "${{ steps.package.outputs.checksum_path }}" \
+            --title "${{ steps.version.outputs.release_title }}" \
+            --generate-notes
+
+      - name: Publish to Chrome Web Store
+        env:
+          CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+          CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+          CWS_PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
+          PACKAGE_PATH: ${{ steps.package.outputs.package_path }}
+        run: |
+          if [ -z "${CWS_CLIENT_ID}" ] || [ -z "${CWS_CLIENT_SECRET}" ] || [ -z "${CWS_REFRESH_TOKEN}" ] || [ -z "${CWS_EXTENSION_ID}" ] || [ -z "${CWS_PUBLISHER_ID}" ]; then
+            echo "Chrome Web Store secrets are not configured. Skipping store publish."
+            exit 0
+          fi
+
+          ACCESS_TOKEN="$(curl --silent --show-error --fail \
+            --request POST https://oauth2.googleapis.com/token \
+            --header 'content-type: application/x-www-form-urlencoded' \
+            --data "client_id=${CWS_CLIENT_ID}&client_secret=${CWS_CLIENT_SECRET}&refresh_token=${CWS_REFRESH_TOKEN}&grant_type=refresh_token" \
+            | node -e "const response = JSON.parse(require('fs').readFileSync(0, 'utf8')); if (!response.access_token) { throw new Error('Unable to obtain Chrome Web Store access token'); } process.stdout.write(response.access_token);")"
+
+          curl --silent --show-error --fail \
+            --request POST \
+            --header "Authorization: Bearer ${ACCESS_TOKEN}" \
+            --header 'x-goog-api-version: 2' \
+            --upload-file "${PACKAGE_PATH}" \
+            "https://chromewebstore.googleapis.com/upload/v2/publishers/${CWS_PUBLISHER_ID}/items/${CWS_EXTENSION_ID}:upload"
+
+          curl --silent --show-error --fail \
+            --request POST \
+            --header "Authorization: Bearer ${ACCESS_TOKEN}" \
+            --header 'x-goog-api-version: 2' \
+            "https://chromewebstore.googleapis.com/v2/publishers/${CWS_PUBLISHER_ID}/items/${CWS_EXTENSION_ID}:publish"

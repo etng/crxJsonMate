@@ -1,0 +1,7 @@
+callback({
+  "ok": true,
+  "payload": {
+    "message": "jsonp fixture",
+    "count": 3
+  }
+});

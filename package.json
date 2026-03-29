@@ -1,0 +1,29 @@
+{
+  "name": "json-mate",
+  "version": "0.2.4",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:wxt": "wxt",
+    "build:wxt": "wxt build && node scripts/write-preview-fixture.mjs",
+    "zip:wxt": "wxt zip",
+    "typecheck": "wxt prepare && tsc --noEmit",
+    "test:unit": "vitest run",
+    "test:e2e": "npm run build:wxt && playwright test",
+    "postinstall": "wxt prepare"
+  },
+  "dependencies": {
+    "json5": "^2.2.3",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@wxt-dev/module-react": "^1.2.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.1",
+    "wxt": "^0.20.20"
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "meta": {
+    "source": "json-mate-local-fixture",
+    "version": "0.2.2",
+    "generatedAt": "2026-03-26T14:30:00+08:00"
+  },
+  "user": {
+    "id": 1024,
+    "profile": {
+      "displayName": "JSON Mate",
+      "email": "json-mate@example.test",
+      "roles": [
+        "viewer",
+        "editor"
+      ],
+      "settings": {
+        "appearance": {
+          "theme": "mint",
+          "density": "comfortable"
+        },
+        "workspace": {
+          "panel": {
+            "side": "right",
+            "collapsed": false
+          }
+        }
+      }
+    }
+  },
+  "items": [
+    {
+      "id": "sku-1",
+      "price": 19.99,
+      "inventory": {
+        "warehouse": {
+          "name": "hangzhou-a",
+          "slots": {
+            "available": 18,
+            "reserved": 3
+          }
+        }
+      },
+      "tags": [
+        "starter",
+        "local"
+      ]
+    },
+    {
+      "id": "sku-2",
+      "price": 48.5,
+      "inventory": {
+        "warehouse": {
+          "name": "hangzhou-b",
+          "slots": {
+            "available": 6,
+            "reserved": 1
+          }
+        }
+      },
+      "tags": [
+        "path-search",
+        "toolkit"
+      ]
+    }
+  ]
+}

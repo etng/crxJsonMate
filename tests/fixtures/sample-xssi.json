@@ -1,0 +1,12 @@
+)]}',
+{
+  "ok": true,
+  "payload": {
+    "message": "xssi fixture",
+    "count": 2,
+    "features": [
+      "json",
+      "viewer"
+    ]
+  }
+}

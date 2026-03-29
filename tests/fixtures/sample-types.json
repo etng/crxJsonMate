@@ -1,0 +1,50 @@
+{
+  "strings": {
+    "plain": "json-mate",
+    "empty": "",
+    "multiline": "line-1\nline-2\nline-3 keeps going with extra explanation for the embedded viewer",
+    "url": "https://example.test/assets/cover.png?width=1280&height=720&fit=contain&theme=mint&preview=full",
+    "content": "intro line one\nintro line two with more context\ncontent line three that should stay visible in minimal mode",
+    "isoTime": "2026-03-27T10:24:00+08:00"
+  },
+  "numbers": {
+    "integer": 42,
+    "float": 19.99,
+    "negative": -7,
+    "timestampSeconds": 1774578240,
+    "timestampMillis": 1774578240000
+  },
+  "states": {
+    "enabled": true,
+    "disabled": false,
+    "nothing": null
+  },
+  "lists": {
+    "tags": [
+      "viewer",
+      "search",
+      "undo"
+    ],
+    "mixed": [
+      1,
+      "two",
+      false,
+      null,
+      {
+        "nested": "value"
+      }
+    ]
+  },
+  "records": [
+    {
+      "id": "sku-1",
+      "price": 19.99,
+      "active": true
+    },
+    {
+      "id": "sku-2",
+      "price": 48.5,
+      "active": false
+    }
+  ]
+}

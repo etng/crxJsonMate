@@ -1,0 +1,37 @@
+{
+  "services": [
+    {
+      "name": "catalog",
+      "status": "ready",
+      "nodes": [
+        {
+          "path": "Root.services[0].nodes[0].metrics",
+          "metrics": {
+            "count": 3,
+            "healthy": true
+          }
+        },
+        {
+          "path": "Root.services[0].nodes[1].metrics",
+          "metrics": {
+            "count": 7,
+            "healthy": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "billing",
+      "status": "degraded",
+      "nodes": [
+        {
+          "path": "Root.services[1].nodes[0].metrics",
+          "metrics": {
+            "count": 11,
+            "healthy": true
+          }
+        }
+      ]
+    }
+  ]
+}

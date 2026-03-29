@@ -1,0 +1,2818 @@
+:root {
+  --viewer-bg: linear-gradient(135deg, #f4efe7 0%, #f7fbfd 48%, #eef3e8 100%);
+  --viewer-panel: rgba(255, 255, 255, 0.84);
+  --viewer-border: rgba(26, 58, 50, 0.12);
+  --viewer-ink: #16312a;
+  --viewer-muted: #5a6b66;
+  --viewer-accent: #0f766e;
+  --viewer-accent-soft: color-mix(in srgb, white 88%, var(--viewer-accent) 12%);
+  --viewer-shadow: 0 28px 60px rgba(16, 24, 40, 0.12);
+  --viewer-mono: "SFMono-Regular", "Cascadia Code", Consolas, monospace;
+  --viewer-ui-surface: color-mix(in srgb, white 94%, var(--viewer-accent) 6%);
+  --viewer-ui-surface-strong: color-mix(in srgb, white 88%, var(--viewer-accent) 12%);
+  --viewer-ui-surface-active: color-mix(in srgb, white 80%, var(--viewer-accent) 20%);
+  --viewer-ui-border: color-mix(in srgb, white 72%, var(--viewer-accent) 28%);
+  --viewer-ui-border-strong: color-mix(in srgb, white 60%, var(--viewer-accent) 40%);
+  --viewer-ui-ink: color-mix(in srgb, var(--viewer-ink) 86%, var(--viewer-accent) 14%);
+  --viewer-ui-shadow: 0 10px 22px color-mix(in srgb, transparent 78%, var(--viewer-accent) 22%);
+  --viewer-ui-shadow-strong: 0 14px 28px color-mix(in srgb, transparent 72%, var(--viewer-accent) 28%);
+  --viewer-ui-switch-off: color-mix(in srgb, white 74%, var(--viewer-accent) 26%);
+  --viewer-ui-switch-on: linear-gradient(
+    180deg,
+    color-mix(in srgb, white 18%, var(--viewer-accent) 82%),
+    var(--viewer-accent)
+  );
+  color: var(--viewer-ink);
+  background: var(--viewer-bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  color: var(--viewer-ink);
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.viewerShell {
+  min-height: 100vh;
+  padding: 32px;
+}
+
+.viewerFrame {
+  width: min(1320px, 100%);
+  margin: 0 auto;
+  display: grid;
+  gap: 20px;
+}
+
+.viewerHero,
+.viewerCard,
+.viewerEditor {
+  border: 1px solid var(--viewer-border);
+  background: var(--viewer-panel);
+  backdrop-filter: blur(18px);
+  border-radius: 24px;
+  box-shadow: var(--viewer-shadow);
+}
+
+.viewerHero {
+  padding: 28px;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.viewerHero h1,
+.viewerCard h2,
+.viewerEditor h2 {
+  margin: 0;
+}
+
+.viewerHero p,
+.viewerCard p,
+.viewerEditor p {
+  margin: 0;
+  color: var(--viewer-muted);
+}
+
+.viewerEyebrow {
+  margin-bottom: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: var(--viewer-accent);
+}
+
+.viewerActions,
+.viewerToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.actionButtonSlot {
+  position: relative;
+  min-width: 0;
+}
+
+.actionButtonSlot[hidden],
+.undoConfirmPopover[hidden] {
+  display: none !important;
+}
+
+.viewerActionSlot {
+  display: inline-flex;
+}
+
+.viewerActions {
+  justify-content: flex-end;
+}
+
+.viewerButton,
+.viewerGhostLink {
+  border: 0;
+  border-radius: 999px;
+  padding: 11px 16px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.viewerButton {
+  background: var(--viewer-accent);
+  color: #fff;
+}
+
+.viewerButton.secondary {
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--viewer-ink);
+  border: 1px solid var(--viewer-border);
+}
+
+.viewerGhostLink {
+  background: var(--viewer-accent-soft);
+  color: var(--viewer-accent);
+}
+
+.viewerIconButton,
+.viewerToolbarButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(26, 58, 50, 0.12);
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--viewer-ink);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.viewerIconButton {
+  width: 40px;
+  padding: 0;
+}
+
+.viewerToolbarButton {
+  padding: 0 14px;
+}
+
+.viewerToolbarButton--ghost {
+  background: rgba(21, 111, 93, 0.08);
+  color: var(--viewer-accent);
+}
+
+.viewerIconButton svg,
+.viewerToolbarButton svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  flex: 0 0 auto;
+}
+
+.viewerGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.92fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.viewerCard,
+.viewerEditor {
+  padding: 24px;
+  align-self: start;
+}
+
+.viewerCardHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.viewerSearchOpenButton {
+  flex: 0 0 auto;
+}
+
+.viewerSearchOpenButton.isIframeMode {
+  display: none;
+}
+
+.viewerStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid var(--viewer-border);
+  color: var(--viewer-muted);
+}
+
+.viewerStatusInline {
+  margin-top: 0;
+  white-space: nowrap;
+}
+
+.viewerWorkspaceBar {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+  padding: 18px 20px 16px;
+  border: 1px solid rgba(26, 58, 50, 0.08);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 248, 250, 0.96));
+  box-shadow: 0 18px 40px rgba(16, 24, 40, 0.08);
+}
+
+.viewerWorkspaceBarCopy {
+  min-width: 0;
+}
+
+.viewerWorkspaceBarCopy h1,
+.viewerWorkspaceBarCopy p {
+  margin: 0;
+}
+
+.viewerWorkspaceBarCopy p:last-child {
+  margin-top: 8px;
+  color: var(--viewer-muted);
+}
+
+.viewerWorkspaceEyebrow {
+  margin: 0 0 8px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--viewer-accent);
+}
+
+.viewerWorkspaceTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.viewerWorkspaceActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.viewerMeta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.viewerMetaCompact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 0;
+}
+
+.viewerMetaBlock {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(26, 58, 50, 0.08);
+  min-width: 0;
+}
+
+.viewerMetaBlock strong,
+.viewerMetaBlock span {
+  display: block;
+}
+
+.viewerMetaBlock strong {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--viewer-muted);
+  margin-bottom: 6px;
+}
+
+.viewerMetaBlock span {
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.viewerSearchField {
+  display: grid;
+  gap: 8px;
+}
+
+.viewerSearchFieldModal {
+  margin-top: 6px;
+}
+
+.viewerSearchField span {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--viewer-muted);
+}
+
+.viewerSearchField input {
+  width: 100%;
+  border: 1px solid rgba(26, 58, 50, 0.12);
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--viewer-ink);
+}
+
+.viewerSearchResults {
+  display: grid;
+  gap: 8px;
+}
+
+.viewerSearchResultsModal {
+  margin-top: 8px;
+  max-height: min(46vh, 420px);
+  overflow: auto;
+}
+
+.viewerSearchResult {
+  border: 1px solid rgba(26, 58, 50, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+  color: inherit;
+  border-radius: 14px;
+  padding: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.viewerSearchResult:hover,
+.viewerSearchResult.isSelected {
+  border-color: rgba(21, 111, 93, 0.24);
+  background: rgba(21, 111, 93, 0.08);
+  box-shadow: 0 12px 24px rgba(16, 24, 40, 0.08);
+  transform: translateY(-1px);
+}
+
+.viewerSearchPath {
+  display: block;
+  font: 13px/1.5 var(--viewer-mono);
+  word-break: break-word;
+}
+
+.viewerSearchMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.viewerSearchPreview {
+  min-width: 0;
+  color: var(--viewer-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.viewerSearchEmpty {
+  padding: 14px 16px;
+  color: var(--viewer-muted);
+  border: 1px dashed rgba(26, 58, 50, 0.14);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.viewerSearchModal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: rgba(12, 24, 22, 0.28);
+  backdrop-filter: blur(16px);
+}
+
+.viewerToolkitModal {
+  position: fixed;
+  inset: 0;
+  z-index: 44;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: rgba(12, 24, 22, 0.32);
+  backdrop-filter: blur(12px);
+}
+
+.viewerSearchDialog {
+  width: min(860px, 100%);
+  max-height: min(82vh, 860px);
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+  border-radius: 28px;
+  border: 1px solid rgba(26, 58, 50, 0.1);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(247, 251, 248, 0.95)),
+    radial-gradient(circle at top left, rgba(21, 111, 93, 0.1), transparent 42%);
+  box-shadow: 0 34px 90px rgba(16, 24, 40, 0.2);
+}
+
+.viewerToolkitDialog {
+  width: min(980px, 100%);
+  height: min(82vh, 820px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 14px;
+  padding: 20px;
+  border-radius: 28px;
+  border: 1px solid rgba(26, 58, 50, 0.1);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 251, 248, 0.96)),
+    radial-gradient(circle at top left, rgba(21, 111, 93, 0.1), transparent 42%);
+  box-shadow: 0 34px 90px rgba(16, 24, 40, 0.22);
+}
+
+.viewerToolkitDialogExpanded {
+  width: min(1480px, calc(100vw - 32px));
+  height: min(92vh, 980px);
+  gap: 18px;
+  padding: 18px;
+  border-radius: 32px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.985), rgba(247, 251, 248, 0.97)),
+    radial-gradient(circle at top right, rgba(21, 111, 93, 0.16), transparent 32%),
+    radial-gradient(circle at top left, rgba(21, 111, 93, 0.12), transparent 38%);
+}
+
+.viewerSearchDialogHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.viewerToolkitDialogHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.viewerToolkitDialogExpanded .viewerToolkitDialogHeader {
+  padding: 6px 8px 0;
+}
+
+.viewerToolkitDialogBody {
+  min-height: 0;
+  border-radius: 20px;
+  border: 1px solid rgba(26, 58, 50, 0.08);
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.viewerToolkitDialogExpanded .viewerToolkitDialogBody {
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(246, 251, 248, 0.96), rgba(255, 255, 255, 0.98)),
+    radial-gradient(circle at top left, rgba(21, 111, 93, 0.08), transparent 34%);
+}
+
+.viewerCollectionModal {
+  z-index: 46;
+}
+
+.viewerCollectionDialog {
+  width: min(720px, calc(100vw - 32px));
+  height: auto;
+  max-height: min(78vh, 760px);
+}
+
+.viewerCollectionDialogBody {
+  display: grid;
+  gap: 14px;
+  min-height: 0;
+  margin: 0;
+  overflow: auto;
+  padding: 2px 4px 4px;
+}
+
+.viewerCollectionField {
+  display: grid;
+  gap: 8px;
+}
+
+.viewerCollectionField > span {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--viewer-muted);
+}
+
+.viewerCollectionSelect {
+  appearance: none;
+}
+
+.viewerCollectionMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--viewer-muted);
+}
+
+.viewerCollectionError {
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(240, 68, 56, 0.15);
+  background: rgba(254, 228, 226, 0.9);
+  color: #b42318;
+}
+
+.viewerCollectionDialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.viewerToolkitFrame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+}
+
+.viewerEyebrowCompact {
+  margin-bottom: 8px;
+}
+
+.viewerSearchModeRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(26, 58, 50, 0.08);
+  background: rgba(255, 255, 255, 0.7);
+  width: fit-content;
+}
+
+.viewerSearchModeButton {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  color: var(--viewer-muted);
+  background: transparent;
+}
+
+.viewerSearchModeButton.isActive {
+  background: var(--viewer-accent);
+  color: #fff;
+}
+
+.viewerSearchMetaBar {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--viewer-muted);
+}
+
+.viewerSearchHistoryBlock {
+  display: grid;
+  gap: 12px;
+}
+
+.viewerSearchHistoryList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.viewerSearchHistoryButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  border: 1px solid rgba(26, 58, 50, 0.08);
+  background: rgba(255, 255, 255, 0.88);
+  color: inherit;
+  border-radius: 999px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.viewerSearchHistoryMode {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--viewer-accent-soft);
+  color: var(--viewer-accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.viewerSearchHistoryQuery {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.viewerInspectorMeta {
+  display: grid;
+  gap: 12px;
+}
+
+.viewerInspectorRow {
+  display: grid;
+  grid-template-columns: 60px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.viewerInspectorLabel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--viewer-muted);
+}
+
+.viewerInspectorInputWrap,
+.viewerInspectorKindRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.viewerInspectorInput {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--viewer-ui-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, var(--viewer-ui-surface), var(--viewer-ui-surface-strong));
+  color: var(--viewer-ui-ink);
+  font: 13px/1.5 var(--viewer-mono);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+.viewerInlineAction {
+  flex: 0 0 auto;
+  border: 1px solid var(--viewer-ui-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, var(--viewer-ui-surface), var(--viewer-ui-surface-strong));
+  color: var(--viewer-ui-ink);
+  box-shadow: var(--viewer-ui-shadow);
+  cursor: pointer;
+}
+
+.viewerSourceCard.isHidden {
+  display: none;
+}
+
+.jmViewerCanvasLauncher {
+  min-height: calc(100vh - 64px);
+  padding: 40px 24px 32px;
+}
+
+.viewerLauncherStage {
+  width: min(1120px, calc(100vw - 48px));
+  margin: 0 auto;
+  display: grid;
+  gap: 18px;
+}
+
+.viewerLauncherLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.78fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.viewerLauncherLaunchStack {
+  min-width: 0;
+}
+
+.viewerLauncherHero {
+  align-items: center;
+}
+
+.viewerLauncherHeroCopy {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.viewerLauncherBrand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.viewerLauncherBrandMark {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  font-size: 14px;
+}
+
+.viewerLauncherBrandCopy {
+  min-width: 0;
+}
+
+.viewerLauncherBrandCopy h1,
+.viewerLauncherBrandCopy p {
+  overflow-wrap: anywhere;
+}
+
+.viewerSourceCard.isLauncherStage {
+  display: grid;
+  gap: 0;
+}
+
+.viewerLauncherQuickStart {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(26, 58, 50, 0.1);
+  background: linear-gradient(180deg, rgba(235, 247, 245, 0.9), rgba(255, 255, 255, 0.98));
+}
+
+.viewerLauncherQuickStartHeader {
+  display: grid;
+  gap: 4px;
+}
+
+.viewerLauncherQuickStartHeader strong,
+.viewerLauncherUrlField > span,
+.viewerLauncherFixtureBlock > span {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--viewer-muted);
+}
+
+.viewerLauncherQuickStartHeader p,
+.viewerLauncherUrlField,
+.viewerLauncherFixtureBlock {
+  margin: 0;
+}
+
+.viewerLauncherFixtureNote {
+  margin: 0;
+  color: var(--viewer-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.viewerLauncherUrlField,
+.viewerLauncherFixtureBlock {
+  display: grid;
+  gap: 8px;
+}
+
+.viewerLauncherUrlInputRow,
+.viewerLauncherFixtureList {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.viewerLauncherUrlInputRow .viewerInspectorInput {
+  flex: 1 1 320px;
+}
+
+.viewerLauncherLibrary {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+  align-content: start;
+}
+
+.viewerLauncherLibraryBlock {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(26, 58, 50, 0.06);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(244, 249, 247, 0.76));
+  box-shadow: none;
+}
+
+.viewerLauncherLibraryHead {
+  display: grid;
+  gap: 4px;
+}
+
+.viewerLauncherLibraryHead strong {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--viewer-muted);
+}
+
+.viewerLauncherLibraryHead span,
+.viewerLauncherLibraryEmpty {
+  color: var(--viewer-muted);
+}
+
+.viewerLauncherLibraryList,
+.viewerLauncherCollections {
+  display: grid;
+  gap: 10px;
+}
+
+.viewerLauncherCollectionGroup {
+  display: grid;
+  gap: 8px;
+}
+
+.viewerLauncherCollectionGroupTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 2px;
+}
+
+.viewerLauncherCollectionGroupTitle strong {
+  font-size: 13px;
+  color: var(--viewer-ink);
+}
+
+.viewerLauncherCollectionGroupTitle span {
+  font-size: 12px;
+  color: var(--viewer-muted);
+}
+
+.viewerLauncherLibraryItem {
+  display: grid;
+  gap: 4px;
+  justify-content: start;
+  align-items: start;
+  text-align: left;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 14px;
+}
+
+.viewerLauncherLibraryItemTitle {
+  font-weight: 600;
+  color: var(--viewer-ink);
+}
+
+.viewerLauncherLibraryItemMeta {
+  font-size: 11px;
+  color: var(--viewer-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 980px) {
+  .viewerLauncherLayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.viewerPreview,
+.jmTree {
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 18px;
+  background: #f9fbfc;
+  border: 1px solid rgba(26, 58, 50, 0.08);
+  min-height: 320px;
+  overflow: auto;
+}
+
+.viewerPreview pre,
+.viewerTextarea {
+  margin: 0;
+  font: 13px/1.6 var(--viewer-mono);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.viewerEditor {
+  display: grid;
+  gap: 16px;
+}
+
+.viewerTextarea {
+  width: 100%;
+  min-height: 280px;
+  border: 1px solid rgba(26, 58, 50, 0.12);
+  border-radius: 18px;
+  padding: 16px;
+  resize: vertical;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--viewer-ink);
+}
+
+.viewerTextareaDocument {
+  min-height: 220px;
+}
+
+.viewerError {
+  color: #b42318;
+  background: rgba(254, 228, 226, 0.88);
+  border: 1px solid rgba(240, 68, 56, 0.15);
+  padding: 12px 14px;
+  border-radius: 16px;
+}
+
+.editorConflictCard {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.editorConflictCard strong {
+  font-size: 13px;
+}
+
+.editorConflictCard span {
+  color: rgba(109, 37, 28, 0.86);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.editorConflictActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.undoConfirmPopover {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 10px);
+  z-index: 3;
+  display: grid;
+  gap: 10px;
+  width: min(320px, calc(100vw - 56px));
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 18px 38px rgba(8, 38, 34, 0.12);
+}
+
+.undoConfirmMessage {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--viewer-ink);
+}
+
+.undoConfirmActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.viewerEmptyState {
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px dashed rgba(26, 58, 50, 0.16);
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.viewerEmptyState strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.treeBranch {
+  display: grid;
+  gap: 2px;
+}
+
+.treeNode {
+  display: grid;
+}
+
+.treeRow {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 6px;
+  align-items: center;
+  min-height: 34px;
+  border-radius: 14px;
+}
+
+.treeRow.isRoot {
+  padding-left: 4px;
+}
+
+.treeRow.isSelected {
+  background: rgba(21, 111, 93, 0.1);
+}
+
+.treeToggle,
+.treeSelect {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.treeToggle {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+}
+
+.treeToggle.isLeaf {
+  cursor: default;
+  color: var(--viewer-muted);
+}
+
+.treeSelect {
+  display: grid;
+  grid-template-columns: minmax(0, 140px) 84px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 12px;
+}
+
+.treeKey {
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.treeKind {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: rgba(21, 111, 93, 0.08);
+  color: var(--viewer-accent);
+}
+
+.treeKind.kind-string {
+  background: rgba(45, 103, 66, 0.12);
+  color: #2d6742;
+}
+
+.treeKind.kind-number,
+.treeKind.kind-boolean {
+  background: rgba(24, 73, 155, 0.12);
+  color: #18499b;
+}
+
+.treeKind.kind-array,
+.treeKind.kind-object {
+  background: rgba(113, 65, 172, 0.12);
+  color: #7141ac;
+}
+
+.treeKind.kind-null {
+  background: rgba(122, 128, 138, 0.12);
+  color: #5b6570;
+}
+
+.treePreview {
+  color: var(--viewer-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.viewerShell.isIframeMode {
+  padding: 0;
+  background:
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 26%),
+    linear-gradient(180deg, #fbfffd 0%, #eff7f3 100%);
+}
+
+.viewerFrame.isIframeMode {
+  width: 100%;
+  min-height: 100vh;
+  padding: 0;
+  gap: 0;
+}
+
+.viewerMateBadge {
+  position: fixed;
+  right: 16px;
+  top: 10px;
+  z-index: 12;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+  transition: transform 180ms ease;
+  cursor: pointer;
+}
+
+.viewerMateBadge.is-panel-open {
+  right: 16px;
+}
+
+.viewerMateBadge:hover,
+.viewerMateBadge:focus-visible {
+  transform: translateY(-1px);
+}
+
+.viewerMateBadgeMark,
+.jmViewerPanelBrandMark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #14b8a6, #0f766e);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  box-shadow: 0 14px 24px rgba(15, 118, 110, 0.24);
+}
+
+.jmViewerPanelBrandMark {
+  width: 40px;
+  height: 40px;
+}
+
+.jmViewerPanelBrandCopy strong {
+  display: block;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0b3b38;
+}
+
+.jmViewerPanelBrandCopy span {
+  display: block;
+  margin-top: 3px;
+  color: #52706b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.jmViewerCanvas {
+  min-height: 100vh;
+}
+
+.jmTreeArea {
+  height: 100vh;
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 1.4em 1.25em 3.2em;
+  font-size: 13px;
+}
+
+.jmTree {
+  overflow: auto;
+}
+
+.jmTree .ico {
+  float: left;
+  cursor: pointer;
+  padding: 0 0 0 2px;
+  pointer-events: none;
+}
+
+.jmTree.noIcons .ico,
+.jmTree.folderIcons .ico {
+  display: none;
+}
+
+.jmTree.folderIcons .treeRow {
+  padding: 0 0 0 20px;
+  background: url(/icons/tree/folder-object-closed.svg) no-repeat 2px 0 / 24px 22px;
+}
+
+.jmTree.folderIcons .node .treeRow {
+  background: url(/icons/tree/leaf-item.svg) no-repeat 2px 0 / 24px 22px;
+}
+
+.jmTree.folderIcons .open > .row > .treeRow {
+  background: url(/icons/tree/folder-object-open.svg) no-repeat 2px 0 / 24px 22px;
+}
+
+.jmTree.noIcons.folderIcons .treeRow,
+.jmTree.noIcons.folderIcons .open > .row > .treeRow {
+  padding: 0;
+  background-image: none;
+}
+
+.jmTree .row {
+  position: relative;
+  padding: 0 0 0 16px;
+  line-height: 24px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.jmTree .treeLabel {
+  display: inline-block;
+  margin: 0 0 0 1px;
+  padding-right: 2px;
+  border-radius: 999px;
+  white-space: nowrap;
+  vertical-align: middle;
+  position: relative;
+  z-index: 1;
+  transition: background-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.jmTree .cur > .row .treeLabel {
+  background: linear-gradient(180deg, #129688, #0f766e);
+  box-shadow: 0 14px 28px rgba(15, 118, 110, 0.22);
+  transform: translateY(-1px);
+}
+
+.jmTree .cur > .row .treeLabel * {
+  color: #fff !important;
+}
+
+.jmTree .treeBranch {
+  background: url(/icons/tree/tree-line.svg) repeat-y 0 0;
+  background-size: 16px 22px;
+}
+
+.jmTree .treeRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  max-width: calc(100% - 24px);
+  border-left: 2px solid transparent;
+  border-radius: 999px;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.jmTree .row:hover .treeRow {
+  border-color: rgba(15, 118, 110, 0.28);
+  background: rgba(223, 247, 243, 0.52);
+}
+
+.jmTree .treeValueLink {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 3;
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+  margin-left: 4px;
+}
+
+.jmTree .row {
+  position: relative;
+}
+
+.jmTree .treeSelectButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0;
+  width: auto;
+  max-width: 100%;
+  min-height: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  color: inherit;
+  line-height: inherit;
+  border-radius: 999px;
+  position: relative;
+  z-index: 2;
+  cursor: pointer;
+}
+
+.jmTree .treeSelectButton:hover,
+.jmTree .treeSelectButton:active {
+  transform: none;
+  box-shadow: none;
+  border-color: transparent;
+}
+
+.jmTree .treeToggleHitbox {
+  position: absolute;
+  left: 2px;
+  top: 0;
+  width: 12px;
+  height: 22px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  z-index: 1;
+  cursor: pointer;
+}
+
+.jmTree .treeKey {
+  display: inline;
+  padding: 3px 10px;
+  white-space: nowrap;
+  color: #116b64;
+  font-weight: 700;
+}
+
+.jmTree .array > .row > .treeRow > .treeLabel > .treeSelectButton > .treeKey {
+  color: #cf6f51;
+}
+
+.jmTree .treeList {
+  margin: 0;
+  padding: 0 0 0 22px;
+  list-style: none;
+}
+
+.jmTree .folder {
+  background: url(/icons/tree/tree-line.svg) repeat-y 0 0;
+  background-size: 16px 22px;
+}
+
+.jmTree .root > .row {
+  background: url(/icons/tree/branch-closed-root.svg) no-repeat 0 0;
+  background-size: 16px 22px;
+}
+
+.jmTree .root.open > .row {
+  background-image: url(/icons/tree/branch-open-root.svg);
+}
+
+.jmTree .treeBranch .row {
+  background: none no-repeat 0 0;
+}
+
+.jmTree .folder > .row {
+  background-image: url(/icons/tree/branch-closed.svg);
+  background-size: 16px 22px;
+}
+
+.jmTree .treeList > li:last-child,
+.jmTree .root {
+  background-image: none;
+}
+
+.jmTree .treeList > li.folder:last-child > .row {
+  background-image: url(/icons/tree/branch-closed-last.svg);
+  background-size: 16px 22px;
+}
+
+.jmTree .treeList > li.node:last-child > .row {
+  background-image: url(/icons/tree/leaf-node-last.svg);
+  background-size: 16px 22px;
+}
+
+.jmTree .open > .row {
+  background-image: url(/icons/tree/branch-open.svg);
+  background-size: 16px 22px;
+}
+
+.jmTree .treeList > li.open:last-child > .row {
+  background-image: url(/icons/tree/branch-open-last.svg);
+  background-size: 16px 22px;
+}
+
+.jmTree .open.root > .row {
+  background-image: url(/icons/tree/branch-open.svg);
+  background-size: 16px 22px;
+}
+
+.jmTree .node > .row {
+  background: url(/icons/tree/leaf-node.svg) no-repeat 0 0;
+  background-size: 16px 22px;
+}
+
+.jmTree .value {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+}
+
+.jmTree.showFullValueText .row,
+.jmTree.showFullValueText .treeLabel {
+  white-space: normal;
+}
+
+.jmTree.showFullValueText .treeRow,
+.jmTree.showFullValueText .treeSelectButton {
+  align-items: flex-start;
+}
+
+.jmTree.showFullValueText .value,
+.jmTree.showFullValueText .value-text {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.jmTree .value-inline-link,
+.jmTree .value-inline-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  background: rgba(240, 249, 247, 0.98);
+  color: #0f766e;
+  text-decoration: none;
+  box-shadow: 0 4px 10px rgba(8, 38, 34, 0.08);
+}
+
+.jmTree .value-inline-action {
+  padding: 0;
+}
+
+.jmTree .value-inline-link svg,
+.jmTree .value-inline-action svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.jmTree .cur > .row .value-inline-link,
+.jmTree .cur > .row .value-inline-action,
+.jmTree .cur > .row .treeValueLink {
+  border-color: rgba(255, 255, 255, 0.48);
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff !important;
+  box-shadow: none;
+}
+
+.jmTree .cur > .row .value-inline-link svg,
+.jmTree .cur > .row .value-inline-action svg,
+.jmTree .cur > .row .treeValueLink svg {
+  fill: currentColor;
+}
+
+.jmTree .value.has-img {
+  display: inline-block;
+  padding-bottom: 8px;
+  vertical-align: text-top;
+}
+
+.jmTree .string > .row .value {
+  color: #b95d2b;
+}
+
+.jmTree .number > .row .value {
+  color: #7956d8;
+}
+
+.jmTree .null > .row .value {
+  color: #8f8d2c;
+}
+
+.jmTree .boolean > .row .value {
+  color: #0a7c97;
+}
+
+.jmTree.showImages .string > .row .value .image-preview-shell {
+  display: inline-flex;
+  flex-flow: row wrap;
+  align-items: flex-end;
+  gap: 8px 10px;
+  margin-top: 8px;
+}
+
+.jmTree .value-preview-image {
+  width: min(160px, 28vw);
+  min-width: 96px;
+  min-height: 64px;
+  max-width: 200px;
+  max-height: 140px;
+  display: block;
+  object-fit: contain;
+  cursor: zoom-in;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  background:
+    linear-gradient(45deg, rgba(15, 118, 110, 0.08) 25%, transparent 25%, transparent 75%, rgba(15, 118, 110, 0.08) 75%),
+    linear-gradient(45deg, rgba(15, 118, 110, 0.08) 25%, transparent 25%, transparent 75%, rgba(15, 118, 110, 0.08) 75%);
+  background-position: 0 0, 10px 10px;
+  background-size: 20px 20px;
+  background-color: #f7fcfa;
+  box-shadow: 0 10px 22px rgba(8, 38, 34, 0.1);
+}
+
+.image-preview-meta {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  gap: 6px;
+  height: 20px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background-color: rgba(15, 118, 110, 0.72);
+  color: #fff;
+  font-size: 11px;
+  line-height: 20px;
+}
+
+.image-preview-shell.is-error .image-preview-meta {
+  background: rgba(190, 52, 85, 0.82);
+  color: #fff5f7;
+}
+
+.image-preview-metaIcon {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+}
+
+.jmTree .array-length {
+  display: none;
+  color: #52706b;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.jmTree.show-array-length .array-length {
+  display: inline;
+  height: 20px;
+  line-height: 20px;
+  margin-left: 4px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background-color: rgba(15, 118, 110, 0.72);
+  color: #fff;
+  text-shadow: none;
+}
+
+.jmTree.lengthMode-array .treeBranch.object > .row .array-length {
+  display: none;
+}
+
+.jmViewerPanel {
+  box-sizing: border-box;
+  position: fixed;
+  right: 0;
+  top: 10px;
+  z-index: 10;
+  width: min(500px, calc(100vw - 10px));
+  min-width: 430px;
+  max-width: calc(100vw - 10px);
+  height: calc(100% - 20px);
+  padding: 14px 14px 12px;
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  border-radius: 28px 0 0 28px;
+  background: rgba(250, 255, 252, 0.92);
+  box-shadow: 0 26px 70px rgba(8, 38, 34, 0.12);
+  backdrop-filter: blur(20px);
+  transition: width 200ms ease-out, height 200ms ease-out, padding 200ms ease-out;
+}
+
+.viewerStatusToast {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 16px 34px rgba(8, 38, 34, 0.12);
+  color: #0b3b38;
+  font-size: 12px;
+  line-height: 1.3;
+  text-align: center;
+  backdrop-filter: blur(14px);
+}
+
+.jmViewerPanel.isMinimized {
+  display: none;
+  width: 0;
+  min-width: 0;
+  max-width: 0;
+  height: 0;
+  padding: 0;
+  border-width: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.jmViewerPanelBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 2px;
+  font-size: 13px;
+}
+
+.jmViewerPanelBrand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 18px;
+  padding: 2px 0 8px;
+  border-bottom: 1px solid rgba(15, 118, 110, 0.12);
+  opacity: 1;
+}
+
+.jmViewerPanelBrandCopy {
+  min-width: 0;
+}
+
+.jmViewerPanelBrandActions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 64px;
+  overflow: visible;
+  position: relative;
+  isolation: isolate;
+}
+
+.panelActionButton--collection {
+  background: linear-gradient(180deg, var(--viewer-ui-surface), var(--viewer-ui-surface-strong));
+  color: var(--viewer-ui-ink);
+}
+
+.panelActionButton {
+  position: relative;
+  overflow: visible;
+  z-index: 0;
+}
+
+.panelActionButton:hover,
+.panelActionButton:focus-visible {
+  z-index: 4;
+}
+
+.panelActionButton--collection.is-active {
+  background: linear-gradient(180deg, color-mix(in srgb, white 72%, var(--viewer-accent) 28%), color-mix(in srgb, white 60%, var(--viewer-accent) 40%));
+  color: var(--viewer-accent);
+  border-color: var(--viewer-ui-border-strong);
+}
+
+.jmViewerPanel.isMinimized .jmViewerPanelBody {
+  height: 1px;
+  overflow: hidden;
+  padding-right: 0;
+}
+
+.jmViewerPanel.isMinimized .jmViewerPanelBrand {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 1;
+  justify-content: flex-end;
+}
+
+.jmViewerPanel.isMinimized .jmViewerPanelBrandMark,
+.jmViewerPanel.isMinimized .jmViewerPanelBrandCopy,
+.jmViewerPanel.isMinimized .jmViewerToolbar,
+.jmViewerPanel.isMinimized .jmViewerTopBox,
+.jmViewerPanel.isMinimized .jmViewerEditorTextarea,
+.jmViewerPanel.isMinimized .jmViewerPrimaryActions,
+.jmViewerPanel.isMinimized .jmViewerToolShelf,
+.jmViewerPanel.isMinimized .jmViewerEditorFeedback,
+.jmViewerPanel.isMinimized .jmViewerDisplayPanel {
+  display: none !important;
+}
+
+.jmViewerToolbar,
+.jmViewerPrimaryActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.jmViewerToolbar {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0 4px 2px 0;
+}
+
+.workspaceToolbar-group {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 10px;
+  overflow: visible;
+  scrollbar-width: none;
+}
+
+.workspaceToolbar-group::-webkit-scrollbar {
+  display: none;
+}
+
+.workspaceToolbar-group .actionButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  position: relative;
+  overflow: visible;
+  min-width: 42px;
+  min-height: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 14px;
+  border: 1px solid var(--viewer-ui-border);
+  background: linear-gradient(180deg, var(--viewer-ui-surface), var(--viewer-ui-surface-strong));
+  color: var(--viewer-ui-ink);
+  box-shadow: var(--viewer-ui-shadow);
+  line-height: 1;
+  flex: 0 0 auto;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.workspaceToolbar-group .actionButton:hover,
+.workspaceToolbar-group .actionButton:focus-visible {
+  transform: translateY(-1px);
+  border-color: var(--viewer-ui-border-strong);
+  background: linear-gradient(180deg, var(--viewer-ui-surface-strong), var(--viewer-ui-surface-active));
+  box-shadow: var(--viewer-ui-shadow-strong);
+}
+
+.workspaceToolbar-group .actionButton:disabled {
+  transform: none;
+  border-color: color-mix(in srgb, white 82%, var(--viewer-accent) 18%);
+  background: color-mix(in srgb, white 94%, var(--viewer-accent) 6%);
+  color: color-mix(in srgb, var(--viewer-ui-ink) 46%, white 54%);
+  box-shadow: none;
+}
+
+.workspaceToolbar-group .actionButton svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  flex: 0 0 auto;
+}
+
+.jmViewerActionButton {
+  min-height: 34px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  margin: 0;
+}
+
+.jmViewerTopBox {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 10px;
+  margin-bottom: 0;
+  padding: 14px;
+  border-radius: 20px;
+  border: 1px solid var(--viewer-ui-border);
+  background: linear-gradient(180deg, var(--viewer-ui-surface), var(--viewer-ui-surface-strong));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+#pathSearchOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 26;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(7, 27, 24, 0.36);
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+#pathSearchOverlay[hidden] {
+  display: none !important;
+}
+
+#pathSearchOverlay.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#pathSearchDialog {
+  width: min(760px, calc(100vw - 48px));
+  max-height: min(78vh, 760px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  padding: 16px;
+  border-radius: 28px;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 28px 80px rgba(5, 24, 21, 0.18);
+}
+
+.pathSearchDialog-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 0 14px;
+}
+
+.pathSearchDialog-copy strong,
+.pathSearchDialog-copy span {
+  display: block;
+}
+
+.pathSearchDialog-copy strong {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--viewer-accent);
+}
+
+.pathSearchDialog-copy span {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--viewer-muted);
+}
+
+.pathSearchDialog-body {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto auto auto auto minmax(0, 1fr);
+  gap: 12px;
+}
+
+.pathSearchMode {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pathSearchModeButton {
+  margin: 0;
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(248, 253, 251, 0.92);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: none;
+}
+
+.pathSearchModeButton.is-active {
+  background: linear-gradient(180deg, #129688, #0f766e);
+  border-color: rgba(15, 118, 110, 0.8);
+  color: #fff;
+}
+
+.pathSearchInput {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  background: rgba(248, 253, 251, 0.9);
+  font-size: 15px;
+  line-height: 1.4;
+  color: #123530;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.46);
+}
+
+.pathSearchInput:focus {
+  outline: none;
+  border-color: rgba(15, 118, 110, 0.3);
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.1);
+}
+
+.pathSearchMeta {
+  min-height: 18px;
+  font-size: 12px;
+  color: var(--viewer-muted);
+}
+
+.pathSearchEmpty {
+  display: none;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px dashed rgba(15, 118, 110, 0.18);
+  background: rgba(248, 253, 251, 0.72);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--viewer-muted);
+}
+
+.pathSearchEmpty.is-visible {
+  display: block;
+}
+
+.pathSearchHistory {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pathSearchHistory[hidden] {
+  display: none;
+}
+
+.pathSearchHistoryButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 9px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  background: rgba(248, 253, 251, 0.92);
+  color: var(--viewer-accent);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.pathSearchHistoryButton span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pathSearchHistoryMode {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.1);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pathSearchResults {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.pathSearchResult {
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 118, 110, 0.12);
+  background: rgba(248, 253, 251, 0.88);
+  text-align: left;
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.pathSearchResult:hover,
+.pathSearchResult.is-active {
+  transform: translateY(-1px);
+  border-color: rgba(15, 118, 110, 0.24);
+  background: rgba(239, 250, 247, 0.98);
+  box-shadow: 0 14px 28px rgba(9, 37, 33, 0.08);
+}
+
+.pathSearchResult:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+  border-color: rgba(15, 118, 110, 0.28);
+}
+
+.pathSearchResultPath {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: #123530;
+  word-break: break-word;
+}
+
+.pathSearchResultMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.pathSearchResultType {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.1);
+  color: var(--viewer-accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pathSearchResultValue {
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--viewer-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jmViewerInspectorLine {
+  display: grid;
+  grid-template-columns: 4em minmax(0, 1fr);
+  align-items: center;
+  column-gap: 12px;
+}
+
+.jmViewerLabel {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  color: var(--viewer-ui-ink);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.jmViewerInspectorBody {
+  min-width: 0;
+}
+
+.jmViewerPathField {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.jmViewerKeyBody {
+  max-width: none;
+}
+
+.jmViewerKeyRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.jmViewerIconAction {
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  border-radius: 12px;
+  border-color: var(--viewer-ui-border);
+  background: linear-gradient(180deg, var(--viewer-ui-surface), var(--viewer-ui-surface-strong));
+  color: var(--viewer-ui-ink);
+  box-shadow: var(--viewer-ui-shadow);
+}
+
+.jmViewerIconAction:hover,
+.jmViewerIconAction:focus-visible {
+  border-color: var(--viewer-ui-border-strong);
+  background: linear-gradient(180deg, var(--viewer-ui-surface-strong), var(--viewer-ui-surface-active));
+}
+
+.jmViewerIconAction svg {
+  width: 16px;
+  height: 16px;
+}
+
+.jmViewerInspectorActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.inspectorValueRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.inspectorValueRow .viewerInspectorInput {
+  min-width: 0;
+}
+
+.inspectorValueRow > span:last-child {
+  color: var(--viewer-ui-ink);
+  font-weight: 700;
+}
+
+.jmViewerEditorTextarea {
+  flex: 1 1 136px;
+  min-height: 96px;
+  resize: none;
+}
+
+.jmViewerEditorTextarea.is-single-line {
+  white-space: pre;
+  overflow-x: auto;
+  overflow-y: auto;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.jmViewerPrimaryActions {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 2px 2px 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: none;
+}
+
+.editorActionGroup--primary {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: none;
+}
+
+.jmViewerPrimaryActions::-webkit-scrollbar,
+.editorActionGroup--primary::-webkit-scrollbar {
+  display: none;
+}
+
+.jmViewerPrimaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: auto;
+  flex: 0 0 auto;
+  min-height: 38px;
+  margin: 0;
+  padding: 7px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--viewer-ui-border);
+  background: linear-gradient(180deg, var(--viewer-ui-surface), var(--viewer-ui-surface-strong));
+  color: var(--viewer-ui-ink);
+  text-decoration: none;
+  box-shadow: var(--viewer-ui-shadow);
+  font-size: 12px;
+}
+
+.jmViewerPrimaryButtonIcon {
+  position: relative;
+  overflow: visible;
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  min-height: 42px;
+  padding: 0;
+  gap: 0;
+  border-radius: 14px;
+}
+
+.jmViewerActionButton:disabled,
+.jmViewerPrimaryButton:disabled,
+.jmViewerToolButton:disabled,
+.viewerToolbarButtonCompact:disabled {
+  border-color: color-mix(in srgb, white 82%, var(--viewer-accent) 18%);
+  background: color-mix(in srgb, white 94%, var(--viewer-accent) 6%);
+  color: color-mix(in srgb, var(--viewer-ui-ink) 42%, white 58%);
+  box-shadow: none;
+  opacity: 1;
+}
+
+.jmViewerPrimaryButtonPrimary:disabled {
+  border-color: color-mix(in srgb, white 68%, var(--viewer-accent) 32%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, white 56%, var(--viewer-accent) 44%),
+    color-mix(in srgb, white 66%, var(--viewer-accent) 34%)
+  );
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.jmViewerPrimaryButton svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  flex: 0 0 auto;
+}
+
+.jmViewerPrimaryButtonIcon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.jmViewerPrimaryButtonPrimary {
+  background: var(--viewer-ui-switch-on);
+  color: #fff;
+  border-color: var(--viewer-ui-border-strong);
+}
+
+.jmViewerPrimaryButtonGhost {
+  background: linear-gradient(180deg, var(--viewer-ui-surface), var(--viewer-ui-surface-strong));
+}
+
+.viewerToolbarButtonCompact {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.viewerActionTooltip {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 10px);
+  bottom: auto;
+  transform: translate(-50%, -4px);
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--viewer-accent) 84%, #042f2e 16%);
+  color: #f8fffd;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--viewer-accent) 22%, transparent 78%);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 140ms ease, transform 140ms ease, visibility 140ms ease;
+  z-index: 220;
+}
+
+.viewerActionTooltip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 8px;
+  height: 8px;
+  background: inherit;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.workspaceToolbar-group .actionButton:hover .viewerActionTooltip,
+.workspaceToolbar-group .actionButton:focus-visible .viewerActionTooltip,
+.jmViewerShelfActionIcon:hover .viewerActionTooltip,
+.jmViewerShelfActionIcon:focus-visible .viewerActionTooltip,
+.jmViewerPrimaryButtonIcon:hover .viewerActionTooltip,
+.jmViewerPrimaryButtonIcon:focus-visible .viewerActionTooltip,
+.panelActionButton:hover .viewerActionTooltip,
+.panelActionButton:focus-visible .viewerActionTooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+
+.workspaceToolbar-group > .actionButton:first-child:not(:last-child) .viewerActionTooltip,
+.jmViewerPrimaryActions > .actionButtonSlot:first-child .viewerActionTooltip,
+.jmViewerPanelBrandActions > .panelActionButton:first-child:not(:last-child) .viewerActionTooltip {
+  left: 0;
+  transform: translate(0, -4px);
+}
+
+.workspaceToolbar-group > .actionButton:last-child:not(:first-child) .viewerActionTooltip,
+.jmViewerPrimaryActions > .actionButtonSlot:last-child .viewerActionTooltip,
+.jmViewerPanelBrandActions > .panelActionButton:last-child:not(:first-child) .viewerActionTooltip {
+  left: auto;
+  right: 0;
+  transform: translate(0, -4px);
+}
+
+.workspaceToolbar-group > .actionButton:first-child:not(:last-child):hover .viewerActionTooltip,
+.workspaceToolbar-group > .actionButton:first-child:not(:last-child):focus-visible .viewerActionTooltip,
+.jmViewerPrimaryActions > .actionButtonSlot:first-child:hover .viewerActionTooltip,
+.jmViewerPrimaryActions > .actionButtonSlot:first-child:focus-within .viewerActionTooltip,
+.jmViewerPanelBrandActions > .panelActionButton:first-child:not(:last-child):hover .viewerActionTooltip,
+.jmViewerPanelBrandActions > .panelActionButton:first-child:not(:last-child):focus-visible .viewerActionTooltip,
+.workspaceToolbar-group > .actionButton:last-child:not(:first-child):hover .viewerActionTooltip,
+.workspaceToolbar-group > .actionButton:last-child:not(:first-child):focus-visible .viewerActionTooltip,
+.jmViewerPrimaryActions > .actionButtonSlot:last-child:hover .viewerActionTooltip,
+.jmViewerPrimaryActions > .actionButtonSlot:last-child:focus-within .viewerActionTooltip,
+.jmViewerPanelBrandActions > .panelActionButton:last-child:not(:first-child):hover .viewerActionTooltip,
+.jmViewerPanelBrandActions > .panelActionButton:last-child:not(:first-child):focus-visible .viewerActionTooltip {
+  transform: translate(0, 0);
+}
+
+.viewerActionTooltip--edge-end {
+  left: auto;
+  right: 0;
+  transform: translate(0, -4px);
+  transform-origin: top right;
+}
+
+.panelActionButton:hover .viewerActionTooltip--edge-end,
+.panelActionButton:focus-visible .viewerActionTooltip--edge-end {
+  transform: translate(0, 0);
+}
+
+.viewerActionTooltip--edge-end::after {
+  left: auto;
+  right: 14px;
+  transform: translate(50%, -50%) rotate(45deg);
+}
+
+.jmViewerToolShelf,
+.jmViewerModePanel,
+.jmViewerDisplayPanel {
+  flex: 0 0 auto;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--viewer-ui-border);
+  background: linear-gradient(180deg, var(--viewer-ui-surface), var(--viewer-ui-surface-strong));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.jmViewerShelfHead strong,
+.jmViewerDisplayHead strong {
+  display: block;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--viewer-ui-ink);
+}
+
+.jmViewerDisplayHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.jmViewerHeadToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 4px 0 0;
+  cursor: pointer;
+}
+
+.jmViewerHeadToggleLabel {
+  color: var(--viewer-ui-ink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.jmViewerHeadToggleControl {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.jmViewerHeadToggleControl input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.jmViewerHeadToggleControl input:checked + .jmViewerToggleSwitch {
+  background: var(--viewer-ui-switch-on);
+}
+
+.jmViewerHeadToggleControl input:checked + .jmViewerToggleSwitch::before {
+  transform: translateX(16px);
+}
+
+.jmViewerShelfHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.jmViewerShelfLead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.jmViewerShelfAction {
+  min-height: 34px;
+  padding-inline: 12px;
+  font-size: 12px;
+}
+
+.jmViewerShelfActionIcon {
+  position: relative;
+  overflow: visible;
+  min-width: 42px;
+  width: 42px;
+  min-height: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 14px;
+}
+
+.jmViewerShelfActionIcon svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.jmViewerToolFilter {
+  min-width: 92px;
+  height: 32px;
+  border: 1px solid var(--viewer-ui-border);
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--viewer-ui-surface), var(--viewer-ui-surface-strong));
+  color: var(--viewer-ui-ink);
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.jmViewerDisplayPanel .viewerIconButton {
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  border-color: var(--viewer-ui-border);
+  background: linear-gradient(180deg, var(--viewer-ui-surface), var(--viewer-ui-surface-strong));
+  box-shadow: var(--viewer-ui-shadow);
+}
+
+.jmViewerDisplayPanel .viewerIconButton:hover,
+.jmViewerDisplayPanel .viewerIconButton:focus-visible {
+  border-color: var(--viewer-ui-border-strong);
+  background: linear-gradient(180deg, var(--viewer-ui-surface-strong), var(--viewer-ui-surface-active));
+  box-shadow: var(--viewer-ui-shadow-strong);
+}
+
+.jmViewerDisplayHead span {
+  display: block;
+  margin-top: 2px;
+  color: color-mix(in srgb, var(--viewer-muted) 88%, var(--viewer-accent) 12%);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.jmViewerToolGrid,
+.jmViewerModeGrid,
+.jmViewerDisplayGrid {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.jmViewerToolGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.jmViewerModeGrid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.jmViewerDisplayGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.jmViewerToolButton {
+  width: 100%;
+  justify-content: flex-start;
+  margin: 0;
+  border-radius: 16px;
+  min-height: 34px;
+  padding-inline: 12px;
+  font-size: 12px;
+}
+
+.jmViewerToggleCard {
+  display: block;
+  cursor: pointer;
+}
+
+.jmViewerToggleCard.is-disabled {
+  opacity: 0.54;
+}
+
+.jmViewerToggleCard.is-disabled .jmViewerToggleBody {
+  cursor: not-allowed;
+}
+
+.jmViewerToggleCard input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.jmViewerToggleBody {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 62px;
+  padding: 10px 12px;
+  border-radius: 18px;
+  border: 1px solid var(--viewer-ui-border);
+  background: linear-gradient(180deg, var(--viewer-ui-surface), var(--viewer-ui-surface-strong));
+  box-shadow: var(--viewer-ui-shadow);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.jmViewerToggleCard:hover .jmViewerToggleBody {
+  transform: translateY(-1px);
+  border-color: var(--viewer-ui-border-strong);
+  box-shadow: var(--viewer-ui-shadow-strong);
+}
+
+.jmViewerToggleCard input:checked + .jmViewerToggleBody {
+  border-color: var(--viewer-ui-border-strong);
+  background: linear-gradient(180deg, var(--viewer-ui-surface-strong), var(--viewer-ui-surface-active));
+  box-shadow: var(--viewer-ui-shadow-strong);
+}
+
+.jmViewerToggleCopy {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.jmViewerToggleCopy strong,
+.jmViewerToggleCopy small {
+  display: block;
+}
+
+.jmViewerToggleCopy strong {
+  color: var(--viewer-ui-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.jmViewerToggleCopy small {
+  margin-top: 4px;
+  color: color-mix(in srgb, var(--viewer-muted) 88%, var(--viewer-accent) 12%);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.jmViewerToggleSwitch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 24px;
+  margin-top: 2px;
+  border-radius: 999px;
+  background: var(--viewer-ui-switch-off);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, white 64%, var(--viewer-accent) 36%);
+}
+
+.jmViewerToggleSwitch::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 5px 12px rgba(10, 31, 28, 0.18);
+  transition: transform 180ms ease;
+}
+
+.jmViewerToggleCard input:checked + .jmViewerToggleBody .jmViewerToggleSwitch {
+  background: var(--viewer-ui-switch-on);
+}
+
+.jmViewerToggleCard input:checked + .jmViewerToggleBody .jmViewerToggleSwitch::before {
+  transform: translateX(16px);
+}
+
+.jmViewerEmptyState {
+  margin-top: 8px;
+}
+
+.viewerImagePreviewDialog {
+  width: min(1120px, 100%);
+  height: min(88vh, 920px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.viewerImagePreviewStage {
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  border-radius: 20px;
+  border: 1px solid rgba(26, 58, 50, 0.08);
+  overflow: hidden;
+  background:
+    linear-gradient(45deg, rgba(15, 118, 110, 0.08) 25%, transparent 25%, transparent 75%, rgba(15, 118, 110, 0.08) 75%),
+    linear-gradient(45deg, rgba(15, 118, 110, 0.08) 25%, transparent 25%, transparent 75%, rgba(15, 118, 110, 0.08) 75%);
+  background-position: 0 0, 14px 14px;
+  background-size: 28px 28px;
+  background-color: rgba(247, 252, 250, 0.94);
+}
+
+.viewerImagePreviewLarge {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+@media (max-width: 980px) {
+  .viewerShell {
+    padding: 18px;
+  }
+
+  .viewerHero {
+    flex-direction: column;
+  }
+
+  .viewerLauncherBrand {
+    align-items: flex-start;
+  }
+
+  .viewerGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .viewerWorkspaceBar,
+  .viewerWorkspaceTitleRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .viewerWorkspaceActions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .viewerSearchModal {
+    padding: 12px;
+  }
+
+  .viewerToolkitModal {
+    padding: 12px;
+  }
+
+  .viewerSearchDialogHeader {
+    flex-direction: column;
+  }
+
+  .viewerSearchDialog {
+    padding: 18px;
+  }
+
+  .viewerToolkitDialog {
+    height: min(88vh, 820px);
+    padding: 16px;
+  }
+
+  .viewerToolkitDialogExpanded {
+    width: 100%;
+    height: min(92vh, 980px);
+    padding: 14px;
+  }
+
+  .viewerMeta,
+  .viewerMetaCompact {
+    grid-template-columns: 1fr;
+  }
+
+  .treeSelect {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .treeKind,
+  .treePreview {
+    justify-self: start;
+  }
+
+  .viewerInspectorRow {
+    grid-template-columns: 1fr;
+  }
+
+  .viewerShell.isIframeMode {
+    padding: 0;
+  }
+
+  .viewerFrame.isIframeMode {
+    padding: 0;
+  }
+
+  .jmViewerPanel {
+    left: 12px;
+    right: 12px;
+    top: auto;
+    bottom: 12px;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    height: min(72vh, 720px);
+    border-radius: 24px;
+  }
+
+  .jmTreeArea {
+    padding: 72px 12px 360px;
+  }
+
+  .jmViewerInspectorLine,
+  .jmViewerKeyRow,
+  .jmViewerPathField {
+    grid-template-columns: 1fr;
+  }
+
+  .jmViewerDisplayGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .jmViewerPrimaryActions,
+  .jmViewerToolGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .jmViewerEditorTextarea {
+    min-height: 220px;
+  }
+
+  .viewerSearchHistoryList,
+  .viewerSearchModeRow {
+    width: 100%;
+  }
+}

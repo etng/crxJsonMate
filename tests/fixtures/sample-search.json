@@ -1,0 +1,31 @@
+{
+  "user": {
+    "profile": {
+      "displayName": "JSON Mate",
+      "searchAlias": "profile hero"
+    },
+    "profileCards": [
+      {
+        "profileName": "Starter profile"
+      },
+      {
+        "profileName": "Toolkit profile"
+      }
+    ]
+  },
+  "meta": {
+    "profileSummary": "profile profile profile"
+  },
+  "catalog": {
+    "items": [
+      {
+        "id": "sku-search-1",
+        "description": "runner alpha"
+      },
+      {
+        "id": "sku-search-2",
+        "description": "runner beta"
+      }
+    ]
+  }
+}

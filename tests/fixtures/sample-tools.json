@@ -1,0 +1,44 @@
+{
+  "meta": {
+    "source": "json-mate-tools-fixture",
+    "generatedAt": "2026-03-27T06:10:00+08:00",
+    "requestId": "req-tools-20260327"
+  },
+  "links": {
+    "homepage": "https://noiseprotocol.org/noise.html?chapter=handshake-patterns&section=one-way&example=noise-nn&lang=en&view=full",
+    "avatar": "https://dummyimage.com/256x160/0f766e/ffffff.png&text=JSON+Mate",
+    "resources": {
+      "docs": {
+        "gettingStarted": "https://noiseprotocol.org/noise.html#introduction",
+        "reference": "https://noiseprotocol.org/noise.html#interactive-pattern-fundamentals-and-handshake-state-transitions-with-message-pattern-modifiers-and-transport-phase-notes"
+      }
+    }
+  },
+  "time": {
+    "iso": "2026-03-27T06:10:00+08:00",
+    "unixMs": 1774563000000,
+    "timezone": {
+      "region": "Asia/Shanghai",
+      "offset": "+08:00"
+    }
+  },
+  "flags": {
+    "enabled": true,
+    "archived": false
+  },
+  "payload": {
+    "raw": "{\"ok\":true,\"count\":3,\"price\":19.99,\"links\":{\"homepage\":\"https://noiseprotocol.org/noise.html#interactive-pattern-fundamentals-and-handshake-state-transitions-with-message-pattern-modifiers-and-transport-phase-notes\",\"avatar\":\"https://dummyimage.com/320x180/0f766e/ffffff.png&text=Nested+JSON\"},\"flags\":{\"enabled\":true,\"archived\":false},\"items\":[1,2,3],\"nested\":{\"profile\":{\"name\":\"Ada\",\"role\":\"initiator\",\"tags\":[\"noise\",\"handshake\",\"fixture\"],\"notes\":\"Line one keeps the meaning visible.\\nLine two checks multi-line rendering.\\nLine three makes the detached viewer worth testing.\"}},\"empty\":null}",
+    "pretty": "{\n  \"ok\": true,\n  \"count\": 3,\n  \"price\": 19.99,\n  \"links\": {\n    \"homepage\": \"https://noiseprotocol.org/noise.html#interactive-pattern-fundamentals-and-handshake-state-transitions-with-message-pattern-modifiers-and-transport-phase-notes\",\n    \"avatar\": \"https://dummyimage.com/320x180/0f766e/ffffff.png&text=Nested+JSON\"\n  },\n  \"flags\": {\n    \"enabled\": true,\n    \"archived\": false\n  },\n  \"items\": [1, 2, 3],\n  \"nested\": {\n    \"profile\": {\n      \"name\": \"Ada\",\n      \"role\": \"initiator\",\n      \"tags\": [\"noise\", \"handshake\", \"fixture\"],\n      \"notes\": \"Line one keeps the meaning visible.\\nLine two checks multi-line rendering.\\nLine three makes the detached viewer worth testing.\"\n    }\n  },\n  \"empty\": null\n}",
+    "decimalText": "12.34",
+    "meta": {
+      "source": {
+        "channel": "fixture",
+        "version": "2026.03"
+      },
+      "article": {
+        "intro": "Noise works best when each message pattern is read as a full sentence.\nStart from the initiator and responder roles.\nThen map every token to what changes in the handshake state.",
+        "content": "A long viewer fixture should exercise the embedded tree with realistic payloads.\nThat means long URLs, multi-line text, nested records, and values that would normally be truncated in a compact tree.\nMinimal mode should still keep the meaning visible even when decorative controls are reduced."
+      }
+    }
+  }
+}

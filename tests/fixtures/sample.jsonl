@@ -1,0 +1,3 @@
+{"id":1,"path":"user.profile.name","value":"mate"}
+{"id":2,"path":"items[0].price","value":19.99}
+{"id":3,"path":"items[1].tags[0]","value":"path-search"}
