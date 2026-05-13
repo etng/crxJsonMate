@@ -38,6 +38,17 @@ export const isTelemetryEventName = (value: unknown): value is TelemetryEventNam
   typeof value === 'string' && allowedTelemetryEvents.has(value as TelemetryEventName)
 );
 
+export const isAutomatedTelemetryEnvironment = (params: {
+  userAgent?: string | null;
+  webdriver?: boolean | null;
+}) => {
+  if (params.webdriver) {
+    return true;
+  }
+
+  return /HeadlessChrome|Playwright|Puppeteer|WebDriver/i.test(String(params.userAgent || ''));
+};
+
 export const buildTelemetryPayload = (params: {
   appVersion: string;
   browserFamily: string;

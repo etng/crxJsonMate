@@ -24,10 +24,11 @@
 				</p>
 				<p>会发送的信息：</p>
 				<ul class="install-list">
-					<li><strong>匿名安装 ID</strong><span>随机生成，仅用于区分安装，不包含账号或设备身份。</span></li>
+					<li><strong>匿名安装 ID</strong><span>随机生成，仅用于区分安装，不包含账号或设备身份；服务端只保存不可逆哈希用于去重统计。</span></li>
 					<li><strong>扩展版本</strong><span>例如 0.2.4，用于判断版本分布。</span></li>
 					<li><strong>事件类型</strong><span>install、update、daily_active、viewer_open、toolkit_open。</span></li>
 					<li><strong>粗粒度环境</strong><span>扩展语言、浏览器大类、操作系统大类。</span></li>
+					<li><strong>粗粒度来源</strong><span>Cloudflare 提供的国家/地区码；不保存 IP、URL、域名或 referrer。</span></li>
 					<li><strong>日期</strong><span>按 UTC 日期聚合，客户端会限频发送。</span></li>
 				</ul>
 				<p>不会发送的信息：</p>

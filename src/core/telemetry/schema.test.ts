@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildTelemetryPayload,
+  isAutomatedTelemetryEnvironment,
   isTelemetryEventName,
   normalizeTelemetrySegment
 } from './schema';
@@ -16,6 +17,21 @@ describe('telemetry schema', () => {
   it('normalizes dimension fields into coarse segments', () => {
     expect(normalizeTelemetrySegment('Chrome 120 / Canary')).toBe('chrome-120-canary');
     expect(normalizeTelemetrySegment('')).toBe('unknown');
+  });
+
+  it('detects automated browser environments for local test suppression', () => {
+    expect(isAutomatedTelemetryEnvironment({
+      userAgent: 'Mozilla/5.0 HeadlessChrome/142.0.0.0',
+      webdriver: false
+    })).toBe(true);
+    expect(isAutomatedTelemetryEnvironment({
+      userAgent: 'Mozilla/5.0 Chrome/142.0.0.0',
+      webdriver: true
+    })).toBe(true);
+    expect(isAutomatedTelemetryEnvironment({
+      userAgent: 'Mozilla/5.0 Chrome/142.0.0.0',
+      webdriver: false
+    })).toBe(false);
   });
 
   it('builds the allowed payload without content-bearing fields', () => {

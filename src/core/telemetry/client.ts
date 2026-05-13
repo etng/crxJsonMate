@@ -3,6 +3,7 @@ import { loadSettings } from '@/core/settings/storage';
 import {
   allowedTelemetryEvents,
   buildTelemetryPayload,
+  isAutomatedTelemetryEnvironment,
   telemetryEndpoint,
   type TelemetryEventName,
   type TelemetryPayload
@@ -19,6 +20,16 @@ const telemetryRequestTimeoutMs = 2500;
 const maxStoredAttemptKeys = 120;
 
 const getUtcDay = (date = new Date()) => date.toISOString().slice(0, 10);
+
+const shouldSkipTelemetryForEnvironment = () => {
+  const automationNavigator = navigator as Navigator & {
+    webdriver?: boolean;
+  };
+  return isAutomatedTelemetryEnvironment({
+    userAgent: navigator.userAgent,
+    webdriver: automationNavigator.webdriver
+  });
+};
 
 const createTelemetryInstallationId = () => {
   if (crypto.randomUUID) {
@@ -142,6 +153,10 @@ export const trackTelemetryEvent = async (
   options: TelemetryEventOptions = {}
 ) => {
   if (!allowedTelemetryEvents.has(eventName)) {
+    return false;
+  }
+
+  if (shouldSkipTelemetryForEnvironment()) {
     return false;
   }
 
