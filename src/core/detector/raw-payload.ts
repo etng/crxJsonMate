@@ -20,6 +20,7 @@ export interface RawTextElementSnapshot {
 export interface RawDocumentSnapshot {
   contentType?: string | null;
   bodyText?: string | null;
+  bodyChildElementCount?: number;
   bodyHasOnlyTextNode?: boolean;
   onlyElement?: RawTextElementSnapshot | null;
   edgeJsonText?: string | null;
@@ -124,6 +125,23 @@ export const parseRawPayload = (
     || tryParseJsonlText(normalized, jsonApi);
 };
 
+export const looksLikeStructuredPayloadText = (text: string | null | undefined) => {
+  const normalized = normalizeCandidateText(text);
+  if (!normalized) {
+    return false;
+  }
+
+  if (normalized.startsWith('{')) {
+    return /"\s*:/.test(normalized.slice(0, 400));
+  }
+
+  if (normalized.startsWith('[')) {
+    return true;
+  }
+
+  return /^[\w$.]+\s*\(/.test(normalized);
+};
+
 export const isLikelyJsonContentType = (contentType: string | null | undefined) => {
   const value = String(contentType || '').toLowerCase();
   return value.includes('json') || value.includes('ndjson');
@@ -166,6 +184,31 @@ export const detectRawPayload = (
   return parseRawPayload(snapshot.edgeJsonText, jsonApi);
 };
 
+export const shouldRefetchRawPayloadText = (
+  snapshot: RawDocumentSnapshot,
+  jsonApi: JsonLikeApi = nativeJsonApi
+) => {
+  const normalizedBodyText = normalizeCandidateText(snapshot.bodyText);
+  const onlyElement = snapshot.onlyElement || null;
+  const alreadyDirectText = snapshot.bodyHasOnlyTextNode
+    || !!(onlyElement && /^(PRE|CODE|XMP)$/i.test(onlyElement.tagName))
+    || !!(onlyElement && !onlyElement.childElementCount);
+
+  if (!normalizedBodyText || isLikelyJsonContentType(snapshot.contentType) || alreadyDirectText) {
+    return false;
+  }
+
+  if (!looksLikeStructuredPayloadText(normalizedBodyText)) {
+    return false;
+  }
+
+  if (parseRawPayload(normalizedBodyText, jsonApi)) {
+    return false;
+  }
+
+  return Number(snapshot.bodyChildElementCount || 0) > 0;
+};
+
 const getNodeText = (node: Element | null) => {
   if (!node) {
     return null;
@@ -193,6 +236,7 @@ export const createRawDocumentSnapshot = (documentRef: Document): RawDocumentSna
   return {
     contentType: documentRef.contentType,
     bodyText: (body as HTMLElement).innerText || body.textContent,
+    bodyChildElementCount: body.childElementCount,
     bodyHasOnlyTextNode,
     onlyElement: onlyElement ? {
       tagName: onlyElement.tagName,

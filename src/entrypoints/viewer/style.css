@@ -37,6 +37,11 @@ body {
   color: var(--viewer-ink);
 }
 
+body.isResizingViewerPanel {
+  cursor: col-resize;
+  user-select: none;
+}
+
 a {
   color: inherit;
 }
@@ -1614,9 +1619,9 @@ textarea {
   right: 0;
   top: 10px;
   z-index: 10;
-  width: min(500px, calc(100vw - 10px));
-  min-width: 430px;
-  max-width: calc(100vw - 10px);
+  width: min(var(--jm-viewer-panel-width, 500px), calc(100vw - 24px));
+  min-width: min(420px, calc(100vw - 24px));
+  max-width: min(50vw, calc(100vw - 24px));
   height: calc(100% - 20px);
   padding: 14px 14px 12px;
   border: 1px solid rgba(15, 118, 110, 0.18);
@@ -1625,6 +1630,38 @@ textarea {
   box-shadow: 0 26px 70px rgba(8, 38, 34, 0.12);
   backdrop-filter: blur(20px);
   transition: width 200ms ease-out, height 200ms ease-out, padding 200ms ease-out;
+}
+
+.jmViewerPanelResizeHandle {
+  position: absolute;
+  left: -8px;
+  top: 22px;
+  bottom: 22px;
+  z-index: 2;
+  width: 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.jmViewerPanelResizeHandle::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.18);
+  transition: background 160ms ease, box-shadow 160ms ease;
+}
+
+.jmViewerPanelResizeHandle:hover::after,
+.jmViewerPanelResizeHandle:focus-visible::after {
+  background: rgba(15, 118, 110, 0.5);
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.08);
 }
 
 .viewerStatusToast {
@@ -1739,6 +1776,7 @@ textarea {
 .jmViewerPanel.isMinimized .jmViewerPanelBrandCopy,
 .jmViewerPanel.isMinimized .jmViewerToolbar,
 .jmViewerPanel.isMinimized .jmViewerTopBox,
+.jmViewerPanel.isMinimized .jmViewerEditorShell,
 .jmViewerPanel.isMinimized .jmViewerEditorTextarea,
 .jmViewerPanel.isMinimized .jmViewerPrimaryActions,
 .jmViewerPanel.isMinimized .jmViewerToolShelf,
@@ -2170,10 +2208,64 @@ textarea {
   font-weight: 700;
 }
 
-.jmViewerEditorTextarea {
+.jmViewerEditorShell {
   flex: 1 1 136px;
   min-height: 96px;
+  display: grid;
+  position: relative;
+}
+
+.jmViewerEditorHighlight,
+.jmViewerEditorShell .jmViewerEditorTextarea {
+  grid-area: 1 / 1;
+  width: 100%;
+  min-height: 100%;
+  height: 100%;
+  margin: 0;
+  font: 13px/1.6 var(--viewer-mono);
+  white-space: pre-wrap;
+  word-break: break-word;
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.jmViewerEditorHighlight {
+  pointer-events: none;
+  overflow: auto;
+  border: 1px solid rgba(26, 58, 50, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--viewer-ink);
+  scrollbar-width: none;
+}
+
+.jmViewerEditorHighlight::-webkit-scrollbar {
+  display: none;
+}
+
+.jmViewerEditorShell:focus-within .jmViewerEditorHighlight {
+  border-color: var(--viewer-ui-border-strong);
+  box-shadow: 0 0 0 3px color-mix(in srgb, transparent 82%, var(--viewer-accent) 18%);
+}
+
+.jmViewerEditorShell.is-invalid .jmViewerEditorHighlight {
+  border-color: rgba(240, 68, 56, 0.35);
+  box-shadow: 0 0 0 3px rgba(240, 68, 56, 0.08);
+}
+
+.jmViewerEditorTextarea {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--viewer-ink);
+  -webkit-text-fill-color: transparent;
   resize: none;
+}
+
+.jmViewerEditorTextarea::selection {
+  background: rgba(15, 118, 110, 0.18);
+  color: transparent;
+  -webkit-text-fill-color: transparent;
 }
 
 .jmViewerEditorTextarea.is-single-line {
@@ -2182,6 +2274,41 @@ textarea {
   overflow-y: auto;
   word-break: normal;
   overflow-wrap: normal;
+}
+
+.jmViewerEditorShell.is-single-line .jmViewerEditorHighlight {
+  white-space: pre;
+  overflow-x: auto;
+  overflow-y: auto;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.jsonSyntaxToken--key {
+  color: #0f766e;
+  font-weight: 700;
+}
+
+.jsonSyntaxToken--string {
+  color: #c2410c;
+}
+
+.jsonSyntaxToken--number {
+  color: #4f46e5;
+}
+
+.jsonSyntaxToken--boolean {
+  color: #b45309;
+  font-weight: 700;
+}
+
+.jsonSyntaxToken--null {
+  color: #64748b;
+  font-weight: 700;
+}
+
+.jsonSyntaxToken--punctuation {
+  color: #334155;
 }
 
 .jmViewerPrimaryActions {
@@ -2788,6 +2915,10 @@ textarea {
     border-radius: 24px;
   }
 
+  .jmViewerPanelResizeHandle {
+    display: none;
+  }
+
   .jmTreeArea {
     padding: 72px 12px 360px;
   }
@@ -2807,6 +2938,7 @@ textarea {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .jmViewerEditorShell,
   .jmViewerEditorTextarea {
     min-height: 220px;
   }

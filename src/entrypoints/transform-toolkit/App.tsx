@@ -3,6 +3,11 @@ import { startTransition, useEffect, useEffectEvent, useMemo, useRef, useState }
 import { toolkitToolMap, toolkitTools, getLocalizedTool, toolMatchesQuery, dedupeToolIds } from '@/core/toolkit/definitions';
 import { type JsonMateSettings } from '@/core/settings/schema';
 import { loadSettings, saveSettings } from '@/core/settings/storage';
+import {
+  getJsonHighlightTokens,
+  shouldHighlightJsonText,
+  type JsonHighlightToken
+} from '@/core/viewer/json-highlight';
 import { getToolkitMessages } from './messages';
 import './style.css';
 
@@ -24,6 +29,12 @@ const resolveContextValue = (isEmbedded: boolean) => {
 const buildNavigation = (currentToolId: string, recentToolIds: string[]) =>
   dedupeToolIds([currentToolId, ...recentToolIds]).slice(0, 5);
 
+const renderJsonHighlightTokens = (tokens: JsonHighlightToken[]) => tokens.map((token, index) => (
+  <span className={`jsonSyntaxToken jsonSyntaxToken--${token.kind}`} key={`${index}-${token.kind}`}>
+    {token.value}
+  </span>
+));
+
 export function App() {
   const [settings, setSettings] = useState<JsonMateSettings | null>(null);
   const [lang, setLang] = useState<JsonMateSettings['lang']>('en');
@@ -37,10 +48,22 @@ export function App() {
   const seedValueRef = useRef('');
   const sourceTextRef = useRef<HTMLTextAreaElement | null>(null);
   const targetTextRef = useRef<HTMLTextAreaElement | null>(null);
+  const sourceHighlightRef = useRef<HTMLPreElement | null>(null);
+  const targetHighlightRef = useRef<HTMLPreElement | null>(null);
 
   const messages = getToolkitMessages(lang);
   const currentTool = toolkitToolMap[currentToolId];
   const localizedCurrentTool = getLocalizedTool(currentTool, lang);
+  const shouldHighlightSourceText = shouldHighlightJsonText(sourceText);
+  const shouldHighlightTargetText = shouldHighlightJsonText(targetText);
+  const sourceHighlightTokens = useMemo(
+    () => getJsonHighlightTokens(sourceText, shouldHighlightSourceText),
+    [sourceText, shouldHighlightSourceText]
+  );
+  const targetHighlightTokens = useMemo(
+    () => getJsonHighlightTokens(targetText, shouldHighlightTargetText),
+    [targetText, shouldHighlightTargetText]
+  );
 
   const filteredTools = useMemo(() => (
     toolkitTools.filter((tool) => toolMatchesQuery(tool, lang, catalogQuery))
@@ -87,6 +110,18 @@ export function App() {
     } as const).catch(() => {
       // Ignore runtime failures when the extension bridge is unavailable.
     });
+  });
+
+  const syncHighlightScroll = useEffectEvent((
+    source: HTMLTextAreaElement,
+    target: HTMLPreElement | null
+  ) => {
+    if (!target) {
+      return;
+    }
+
+    target.scrollTop = source.scrollTop;
+    target.scrollLeft = source.scrollLeft;
   });
 
   const syncLoadedSettings = useEffectEvent(async () => {
@@ -369,14 +404,23 @@ export function App() {
                 <label htmlFor="sourceText">{messages.sourceLabel}</label>
                 <span>{messages.sourceHint}</span>
               </div>
-              <textarea
-                id="sourceText"
-                onChange={(event) => setSourceText(event.target.value)}
-                ref={sourceTextRef}
-                rows={12}
-                spellCheck={false}
-                value={sourceText}
-              />
+              <div className="toolTextareaShell">
+                <pre aria-hidden="true" className="toolTextareaHighlight" ref={sourceHighlightRef}>
+                  <code>{renderJsonHighlightTokens(sourceHighlightTokens)}</code>
+                </pre>
+                <textarea
+                  id="sourceText"
+                  onChange={(event) => {
+                    setSourceText(event.target.value);
+                    syncHighlightScroll(event.currentTarget, sourceHighlightRef.current);
+                  }}
+                  onScroll={(event) => syncHighlightScroll(event.currentTarget, sourceHighlightRef.current)}
+                  ref={sourceTextRef}
+                  rows={12}
+                  spellCheck={false}
+                  value={sourceText}
+                />
+              </div>
             </div>
 
             <div className="workspaceQuickActions" aria-label="Transform actions">
@@ -399,14 +443,23 @@ export function App() {
                 <label htmlFor="targetText">{messages.targetLabel}</label>
                 <span>{messages.targetHint}</span>
               </div>
-              <textarea
-                id="targetText"
-                onChange={(event) => setTargetText(event.target.value)}
-                ref={targetTextRef}
-                rows={12}
-                spellCheck={false}
-                value={targetText}
-              />
+              <div className="toolTextareaShell">
+                <pre aria-hidden="true" className="toolTextareaHighlight" ref={targetHighlightRef}>
+                  <code>{renderJsonHighlightTokens(targetHighlightTokens)}</code>
+                </pre>
+                <textarea
+                  id="targetText"
+                  onChange={(event) => {
+                    setTargetText(event.target.value);
+                    syncHighlightScroll(event.currentTarget, targetHighlightRef.current);
+                  }}
+                  onScroll={(event) => syncHighlightScroll(event.currentTarget, targetHighlightRef.current)}
+                  ref={targetTextRef}
+                  rows={12}
+                  spellCheck={false}
+                  value={targetText}
+                />
+              </div>
             </div>
           </div>
 

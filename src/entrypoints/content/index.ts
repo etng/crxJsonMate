@@ -1,6 +1,13 @@
 import JSON5 from 'json5';
 import { browser } from '#imports';
-import { detectRawPayload, createRawDocumentSnapshot, type JsonLikeApi, type RawPayloadResult } from '@/core/detector/raw-payload';
+import {
+  createRawDocumentSnapshot,
+  detectRawPayload,
+  parseRawPayload,
+  shouldRefetchRawPayloadText,
+  type JsonLikeApi,
+  type RawPayloadResult
+} from '@/core/detector/raw-payload';
 import { loadSettings, saveSettings } from '@/core/settings/storage';
 import type { JsonMateRuntimeMessage } from '@/core/messaging/messages';
 
@@ -14,18 +21,57 @@ export default defineContentScript({
   runAt: 'document_end',
   async main() {
     let settings = await loadSettings();
-    const jsonApi = settings.jsonEngine === 'JM-JSON' ? json5Api : undefined;
-    let detectedPayload: RawPayloadResult | null = detectRawPayload(
-      createRawDocumentSnapshot(document),
-      jsonApi
-    );
+    const getJsonApi = () => (settings.jsonEngine === 'JM-JSON' ? json5Api : undefined);
+    let fetchedSourceRawText: string | undefined;
+    let fetchSourceRawTextTask: Promise<string | null> | null = null;
+    const fetchSourceRawText = async () => {
+      if (typeof fetchedSourceRawText === 'string') {
+        return fetchedSourceRawText;
+      }
+
+      if (fetchSourceRawTextTask) {
+        return await fetchSourceRawTextTask;
+      }
+
+      fetchSourceRawTextTask = browser.runtime.sendMessage({
+        cmd: 'fetchSourceRawText',
+        url: window.location.href
+      } as const)
+        .then((result) => (typeof result === 'string' ? result : null))
+        .catch(() => null)
+        .then((result) => {
+          if (typeof result === 'string') {
+            fetchedSourceRawText = result;
+          }
+          return result;
+        })
+        .finally(() => {
+          fetchSourceRawTextTask = null;
+        });
+
+      return await fetchSourceRawTextTask;
+    };
+    const resolveDetectedPayload = async (jsonApi: JsonLikeApi | undefined = getJsonApi()) => {
+      const snapshot = createRawDocumentSnapshot(document);
+      const domPayload = detectRawPayload(snapshot, jsonApi);
+      if (domPayload) {
+        return domPayload;
+      }
+
+      if (!shouldRefetchRawPayloadText(snapshot, jsonApi)) {
+        return null;
+      }
+
+      const sourceRawText = await fetchSourceRawText();
+      return sourceRawText ? parseRawPayload(sourceRawText, jsonApi) : null;
+    };
+    let detectedPayload: RawPayloadResult | null = await resolveDetectedPayload();
     let inPageViewerRendered = false;
     let recoveryBannerShown = false;
 
     const refreshDetectedPayload = async () => {
       settings = await loadSettings();
-      const latestJsonApi = settings.jsonEngine === 'JM-JSON' ? json5Api : undefined;
-      detectedPayload = detectRawPayload(createRawDocumentSnapshot(document), latestJsonApi);
+      detectedPayload = await resolveDetectedPayload();
       return detectedPayload;
     };
 

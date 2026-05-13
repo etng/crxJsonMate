@@ -3,8 +3,10 @@ import { describe, expect, it } from 'vitest';
 import {
   collectRawTextCandidates,
   detectRawPayload,
+  looksLikeStructuredPayloadText,
   normalizeCandidateText,
   parseRawPayload,
+  shouldRefetchRawPayloadText,
   type JsonLikeApi
 } from './raw-payload';
 
@@ -66,6 +68,13 @@ describe('raw payload parser', () => {
     expect(parseRawPayload('Noise patterns (NN, IK, XX) are listed below.')).toBeNull();
     expect(parseRawPayload('The hash output is BLAKE2s (32 bytes).')).toBeNull();
   });
+
+  it('recognizes JSON-like text prefixes without parsing the full payload', () => {
+    expect(looksLikeStructuredPayloadText('{"root":3}')).toBe(true);
+    expect(looksLikeStructuredPayloadText('[{"root":3}]')).toBe(true);
+    expect(looksLikeStructuredPayloadText('callback({"root":3});')).toBe(true);
+    expect(looksLikeStructuredPayloadText('{ not actually json }')).toBe(false);
+  });
 });
 
 describe('raw payload candidate detection', () => {
@@ -112,5 +121,24 @@ describe('raw payload candidate detection', () => {
     });
 
     expect(result).toBeNull();
+  });
+
+  it('flags HTML-parsed JSON pages for a raw refetch fallback', () => {
+    expect(shouldRefetchRawPayloadText({
+      contentType: 'text/html',
+      bodyText: '{"root":"line one\nline two","next":1}',
+      bodyChildElementCount: 2,
+      bodyHasOnlyTextNode: false,
+      onlyElement: null
+    })).toBe(true);
+  });
+
+  it('does not refetch plain JSON pages whose body text is already directly readable', () => {
+    expect(shouldRefetchRawPayloadText({
+      contentType: 'text/html',
+      bodyText: '{"root":3}',
+      bodyChildElementCount: 0,
+      bodyHasOnlyTextNode: true
+    })).toBe(false);
   });
 });

@@ -1,5 +1,6 @@
 import { browser } from '#imports';
-import { startTransition, useDeferredValue, useEffect, useEffectEvent, useRef, useState } from 'react';
+import { startTransition, useDeferredValue, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
+import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { defaultSettings, type JsonMateSettings } from '@/core/settings/schema';
 import { loadSettings, saveSettings } from '@/core/settings/storage';
 import {
@@ -16,6 +17,10 @@ import {
   type ViewerLibrarySnapshot,
   type ViewerSourceType
 } from '@/core/viewer/library';
+import {
+  getJsonHighlightTokens,
+  shouldHighlightJsonText
+} from '@/core/viewer/json-highlight';
 import {
   buildViewerPayloadState,
   createViewerStateFromData,
@@ -60,6 +65,7 @@ const rootPathKey = getViewerPathKey([]);
 const modernSearchHistoryStorageKey = 'jsonMate.modernViewerSearchHistory.v1';
 const modernSearchModeStorageKey = 'jsonMate.modernViewerSearchMode.v1';
 const modernViewerMinimalModeStorageKey = 'jsonMate.modernViewerMinimalMode.v1';
+const modernViewerPanelWidthStorageKey = 'jsonMate.modernViewerPanelWidth.v1';
 const jmTreeLengthClassName = 'show-array-length';
 const detachedViewerJsonQueryKey = 'json';
 const detachedViewerSourcePathQueryKey = 'sourcePath';
@@ -75,6 +81,12 @@ const progressiveTreeBranchBatchSize = 60;
 const progressiveTreeRootChunkSize = 240;
 const progressiveTreeBranchChunkSize = 120;
 const progressiveTreeChunkDelayMs = 24;
+const viewerPanelDefaultWidth = 500;
+const viewerPanelMinWidth = 420;
+const viewerPanelMaxViewportRatio = 0.5;
+const viewerPanelViewportInset = 24;
+const viewerPanelKeyboardStep = 16;
+const viewerPanelLargeKeyboardStep = 48;
 
 const encodeDetachedViewerPayloadHash = (payload: NonNullable<EmbeddedViewerMessage['json']>) => {
   const encodedJson = encodeURIComponent(JSON.stringify(payload));
@@ -174,7 +186,6 @@ interface EditorConflictState {
 }
 
 type ViewerToolFilterMode = 'auto' | 'all' | 'text' | 'json' | 'time' | 'state';
-
 const SearchIcon = () => (
   <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
     <path d="M10.4 4a6.4 6.4 0 1 1 0 12.8 6.4 6.4 0 0 1 0-12.8zm0 2a4.4 4.4 0 1 0 0 8.8 4.4 4.4 0 0 0 0-8.8z" />
@@ -861,6 +872,60 @@ const writeViewerMinimalMode = (enabled: boolean) => {
   }
 };
 
+const getViewerPanelViewportMaxWidth = () => {
+  if (typeof window === 'undefined') {
+    return viewerPanelDefaultWidth;
+  }
+
+  return Math.max(0, window.innerWidth - viewerPanelViewportInset);
+};
+
+const getViewerPanelMinWidth = () => Math.min(viewerPanelMinWidth, getViewerPanelViewportMaxWidth());
+
+const getViewerPanelRatioMaxWidth = () => {
+  if (typeof window === 'undefined') {
+    return viewerPanelDefaultWidth;
+  }
+
+  return window.innerWidth * viewerPanelMaxViewportRatio;
+};
+
+const getViewerPanelMaxWidth = () => Math.max(
+  getViewerPanelMinWidth(),
+  Math.min(getViewerPanelRatioMaxWidth(), getViewerPanelViewportMaxWidth())
+);
+
+const clampViewerPanelWidth = (width: number) => (
+  Math.min(Math.max(width, getViewerPanelMinWidth()), getViewerPanelMaxWidth())
+);
+
+const readViewerPanelWidth = () => {
+  if (typeof window === 'undefined') {
+    return viewerPanelDefaultWidth;
+  }
+
+  try {
+    const storedWidth = Number(window.localStorage.getItem(modernViewerPanelWidthStorageKey));
+    return Number.isFinite(storedWidth)
+      ? clampViewerPanelWidth(storedWidth)
+      : clampViewerPanelWidth(viewerPanelDefaultWidth);
+  } catch {
+    return clampViewerPanelWidth(viewerPanelDefaultWidth);
+  }
+};
+
+const writeViewerPanelWidth = (width: number) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(modernViewerPanelWidthStorageKey, String(Math.round(clampViewerPanelWidth(width))));
+  } catch {
+    // Ignore storage failures in constrained browser contexts.
+  }
+};
+
 const formatViewerInspectorPath = (path: ViewerPath) => (
   path.length === 0 ? '' : formatViewerEditablePath(path)
 );
@@ -987,6 +1052,7 @@ export function App() {
   const [isEditorSingleLine, setIsEditorSingleLine] = useState(false);
   const [isIframeMode, setIsIframeMode] = useState(initialIframeMode);
   const [isWorkspaceOpen, setIsWorkspaceOpen] = useState(true);
+  const [viewerPanelWidth, setViewerPanelWidth] = useState(() => readViewerPanelWidth());
   const [hasSelection, setHasSelection] = useState(false);
   const [selectedPath, setSelectedPath] = useState<ViewerPath>([]);
   const [keyInputValue, setKeyInputValue] = useState('');
@@ -1031,6 +1097,8 @@ export function App() {
   const recordedRecentSourceRef = useRef<string>('');
   const recordedCollectionSourceRef = useRef<string>('');
   const collectionNewInputRef = useRef<HTMLInputElement | null>(null);
+  const viewerPanelWidthRef = useRef(viewerPanelWidth);
+  const editorHighlightRef = useRef<HTMLPreElement | null>(null);
 
   const lang = settings?.lang || 'en';
   const messages = getViewerMessages(lang);
@@ -1038,6 +1106,7 @@ export function App() {
   const currentValueInfo = hasSelection && viewerState
     ? getViewerNodeDisplayData(currentValue, selectedPath[selectedPath.length - 1] ?? null)
     : null;
+  const selectedKind = currentValue === undefined ? '-' : currentValueInfo?.kind ?? '-';
   const rootValueInfo = viewerState ? getViewerNodeDisplayData(viewerState.payload.data) : null;
   const viewerJsonEngine = settings?.jsonEngine || 'JM-JSON';
   const currentDetachedValueCandidate = hasSelection
@@ -1067,6 +1136,16 @@ export function App() {
   const searchPlaceholder = pathSearchMode === 'value'
     ? messages.valueSearchPlaceholder
     : messages.pathSearchPlaceholder;
+  const shouldHighlightEditorText = shouldHighlightJsonText(editorText, selectedKind);
+  const highlightedEditorTokens = useMemo(
+    () => getJsonHighlightTokens(editorText, shouldHighlightEditorText),
+    [editorText, shouldHighlightEditorText]
+  );
+  const viewerPanelStyle = {
+    '--jm-viewer-panel-width': `${viewerPanelWidth}px`
+  } as CSSProperties;
+  const viewerPanelCurrentMinWidth = Math.round(getViewerPanelMinWidth());
+  const viewerPanelCurrentMaxWidth = Math.round(getViewerPanelMaxWidth());
   const launcherFixtures = [
     {
       id: 'ipinfo',
@@ -1092,6 +1171,16 @@ export function App() {
       id: 'dogapi',
       label: messages.launcherFixtureDogCeo,
       url: 'https://dog.ceo/api/breeds/image/random/20'
+    },
+    {
+      id: 'lzi-vod-detail',
+      label: messages.launcherFixtureLziVodDetail,
+      url: 'https://cj.lziapi.com/api.php/provide/vod/?ac=detail'
+    },
+    {
+      id: 'lzi-vod-list',
+      label: messages.launcherFixtureLziVodList,
+      url: 'https://cj.lziapi.com/api.php/provide/vod/?ac=list'
     }
   ];
   const launcherInlineSamples = [
@@ -2011,8 +2100,102 @@ export function App() {
     commitViewerEdit(editorText, 'manual');
   });
 
+  const updateViewerPanelWidth = useEffectEvent((nextWidth: number) => {
+    const clampedWidth = clampViewerPanelWidth(nextWidth);
+    viewerPanelWidthRef.current = clampedWidth;
+    setViewerPanelWidth(clampedWidth);
+    return clampedWidth;
+  });
+
+  const startViewerPanelResize = useEffectEvent((event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!event.isPrimary || event.button !== 0) {
+      return;
+    }
+
+    event.preventDefault();
+    const startX = event.clientX;
+    const startWidth = viewerPanelWidthRef.current;
+    const resizeHandle = event.currentTarget;
+    const pointerId = event.pointerId;
+
+    try {
+      resizeHandle.setPointerCapture(pointerId);
+    } catch {
+      // Pointer capture can fail if the browser releases the pointer first.
+    }
+
+    document.body.classList.add('isResizingViewerPanel');
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      updateViewerPanelWidth(startWidth + startX - moveEvent.clientX);
+    };
+
+    const stopResize = () => {
+      document.body.classList.remove('isResizingViewerPanel');
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', stopResize);
+      window.removeEventListener('pointercancel', stopResize);
+      writeViewerPanelWidth(viewerPanelWidthRef.current);
+
+      try {
+        resizeHandle.releasePointerCapture(pointerId);
+      } catch {
+        // The pointer may already be released.
+      }
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', stopResize);
+    window.addEventListener('pointercancel', stopResize);
+  });
+
+  const resizeViewerPanelWithKeyboard = useEffectEvent((event: ReactKeyboardEvent<HTMLDivElement>) => {
+    const step = event.shiftKey ? viewerPanelLargeKeyboardStep : viewerPanelKeyboardStep;
+    let nextWidth: number | null = null;
+
+    if (event.key === 'ArrowLeft') {
+      nextWidth = viewerPanelWidthRef.current + step;
+    } else if (event.key === 'ArrowRight') {
+      nextWidth = viewerPanelWidthRef.current - step;
+    } else if (event.key === 'Home') {
+      nextWidth = getViewerPanelMinWidth();
+    } else if (event.key === 'End') {
+      nextWidth = getViewerPanelMaxWidth();
+    }
+
+    if (nextWidth === null) {
+      return;
+    }
+
+    event.preventDefault();
+    writeViewerPanelWidth(updateViewerPanelWidth(nextWidth));
+  });
+
+  const syncEditorHighlightScroll = useEffectEvent((source: HTMLTextAreaElement) => {
+    const highlightLayer = editorHighlightRef.current;
+    if (!highlightLayer) {
+      return;
+    }
+
+    highlightLayer.scrollTop = source.scrollTop;
+    highlightLayer.scrollLeft = source.scrollLeft;
+  });
+
   useEffect(() => {
     void bootViewer();
+  }, []);
+
+  useEffect(() => {
+    viewerPanelWidthRef.current = viewerPanelWidth;
+  }, [viewerPanelWidth]);
+
+  useEffect(() => {
+    const handleWindowResize = () => {
+      updateViewerPanelWidth(viewerPanelWidthRef.current);
+    };
+
+    window.addEventListener('resize', handleWindowResize);
+    return () => window.removeEventListener('resize', handleWindowResize);
   }, []);
 
   useEffect(() => {
@@ -2398,7 +2581,6 @@ export function App() {
   }, [applyToolkitReturnValue]);
 
   const selectedPathLabel = hasSelection ? formatViewerInspectorPath(selectedPath) : '';
-  const selectedKind = currentValue === undefined ? '-' : currentValueInfo?.kind ?? '-';
   const inspectorTextValue = hasSelection ? editorText : '';
   const canOpenDetachedViewer = Boolean(
     (viewerState && settings) || inputText.trim()
@@ -2855,7 +3037,25 @@ export function App() {
                 <span className="srOnly">{isWorkspaceOpen ? messages.badgeOpenState : messages.badgeClosedState}</span>
               </button>
 
-              <aside className={`jmViewerPanel${isWorkspaceOpen ? '' : ' isMinimized'}`} id="panel">
+              <aside
+                className={`jmViewerPanel${isWorkspaceOpen ? '' : ' isMinimized'}`}
+                id="panel"
+                style={viewerPanelStyle}
+              >
+                <div
+                  aria-controls="valueAct"
+                  aria-label="Resize tools panel"
+                  aria-orientation="vertical"
+                  aria-valuemax={viewerPanelCurrentMaxWidth}
+                  aria-valuemin={viewerPanelCurrentMinWidth}
+                  aria-valuenow={Math.round(viewerPanelWidth)}
+                  className="jmViewerPanelResizeHandle"
+                  onKeyDown={resizeViewerPanelWithKeyboard}
+                  onPointerDown={startViewerPanelResize}
+                  role="separator"
+                  tabIndex={0}
+                  title="Resize tools panel"
+                />
                 <div className="jmViewerPanelBody" id="valueAct">
                   <div className="jmViewerPanelBrand panelBrand">
                     <div className="jmViewerPanelBrandCopy panelBrand-copy">
@@ -3067,23 +3267,36 @@ export function App() {
 
                   {viewerState ? (
                     <>
-                      <textarea
-                        className={`viewerTextarea jmViewerEditorTextarea${isEditorSingleLine ? ' is-single-line' : ''}${errorText ? ' is-invalid' : ''}`}
-                        cols={66}
-                        id="editorValue"
-                        onChange={(event) => {
-                          setEditorText(event.target.value);
-                          if (editorConflict) {
-                            setEditorConflict(null);
-                            setErrorText('');
-                          }
-                        }}
-                        readOnly={!hasSelection}
-                        rows={22}
-                        spellCheck={false}
-                        wrap={isEditorSingleLine ? 'off' : 'soft'}
-                        value={editorText}
-                      />
+                      <div className={`jmViewerEditorShell${isEditorSingleLine ? ' is-single-line' : ''}${errorText ? ' is-invalid' : ''}`}>
+                        <pre aria-hidden="true" className="jmViewerEditorHighlight" ref={editorHighlightRef}>
+                          <code>
+                            {highlightedEditorTokens.map((token, index) => (
+                              <span className={`jsonSyntaxToken jsonSyntaxToken--${token.kind}`} key={`${index}-${token.kind}`}>
+                                {token.value}
+                              </span>
+                            ))}
+                          </code>
+                        </pre>
+                        <textarea
+                          className={`viewerTextarea jmViewerEditorTextarea${isEditorSingleLine ? ' is-single-line' : ''}${errorText ? ' is-invalid' : ''}`}
+                          cols={66}
+                          id="editorValue"
+                          onChange={(event) => {
+                            setEditorText(event.target.value);
+                            syncEditorHighlightScroll(event.currentTarget);
+                            if (editorConflict) {
+                              setEditorConflict(null);
+                              setErrorText('');
+                            }
+                          }}
+                          onScroll={(event) => syncEditorHighlightScroll(event.currentTarget)}
+                          readOnly={!hasSelection}
+                          rows={22}
+                          spellCheck={false}
+                          wrap={isEditorSingleLine ? 'off' : 'soft'}
+                          value={editorText}
+                        />
+                      </div>
                       <div className="jmViewerPrimaryActions editorPrimaryRow">
                         <div className="editorActionGroup editorActionGroup--primary">
                           <div className="actionButtonSlot" hidden={!hasSelection}>

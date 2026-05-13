@@ -133,6 +133,23 @@ const openWorkspaceLauncher = async (params?: Record<string, string | null | und
   await openViewerPage(params);
 };
 
+const fetchSourceRawText = async (url: string) => {
+  try {
+    const response = await fetch(url, {
+      credentials: 'include',
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return await response.text();
+  } catch {
+    return null;
+  }
+};
+
 const sendMessageToTab = async (tabId: number | undefined, payload: JsonMateRuntimeMessage) => {
   if (!tabId) {
     return null;
@@ -236,6 +253,8 @@ export default defineBackground(() => {
       case 'setPendingJson':
         await setPendingViewerJson(request.data);
         return {};
+      case 'fetchSourceRawText':
+        return await fetchSourceRawText(request.url);
       case 'getPendingInput':
         return await consumePendingViewerInput();
       case 'peekPendingInput':

@@ -48,6 +48,11 @@ export interface GetDetectedJsonTextMessage {
   cmd: 'getDetectedJsonText';
 }
 
+export interface FetchSourceRawTextMessage {
+  cmd: 'fetchSourceRawText';
+  url: string;
+}
+
 export interface GetSelectionTextMessage {
   cmd: 'getSelectionText';
 }
@@ -73,6 +78,7 @@ export type JsonMateRuntimeMessage =
   | PeekPendingInputMessage
   | RunViewerInPageMessage
   | GetDetectedJsonTextMessage
+  | FetchSourceRawTextMessage
   | GetSelectionTextMessage
   | SaveSettingsMessage
   | LoadSettingsMessage;

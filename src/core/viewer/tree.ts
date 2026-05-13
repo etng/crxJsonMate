@@ -532,7 +532,7 @@ export const searchViewerPaths = (
     const currentKey = currentPath.length === 0 ? 'Root' : String(currentPath[currentPath.length - 1]);
     const valueSearchText = getValueSearchText(currentValue);
     const valueDisplayData = getViewerNodeDisplayData(currentValue, currentPath[currentPath.length - 1] ?? null);
-    const canMatchCurrentNode = mode !== 'value' || !isStructuredValue(currentValue);
+    const canMatchCurrentNode = mode !== 'value' || currentPath.length > 0;
     let score = 0;
 
     if (canMatchCurrentNode) {
