@@ -23,7 +23,7 @@ JSON Mate 是一个面向真实调试场景的 JSON 浏览器扩展。它把 JSO
 - 顶层示例数据：便于验证布尔值、时间戳、多行文本、数组、对象、图片链接等常见结构
 - 多语言界面：当前支持 English、简体中文、繁體中文、日本語，扩展内页面可切换，浏览器原生扩展卡片也支持本地化
 - 独立 Toolkit：适合做整段文本的集中转换和清洗
-- GitHub Releases + GitHub Pages：便于公开分发、版本跟踪和对外展示
+- GitHub Releases + Cloudflare 托管站点：便于公开分发、版本跟踪和对外展示
 
 ## 安装方式
 
@@ -83,7 +83,7 @@ JSON Mate 是一个面向真实调试场景的 JSON 浏览器扩展。它把 JSO
 - 扩展版本使用严格 `x.y.z` 的 SemVer 形式
 - 发布包文件名与 `package.json` 版本保持一致，例如 `json-mate-v0.2.4.zip`
 - GitHub Release workflow 以 `vX.Y.Z` tag 为发布触发源
-- GitHub Pages 站点用于展示功能、安装方式和下载入口
+- Cloudflare 托管站点用于展示功能、安装方式和下载入口
 
 ## 更新策略
 
@@ -103,6 +103,6 @@ JSON Mate 的核心能力是识别并渲染页面中的 JSON 内容，以及提�
 
 - 项目仓库：`https://github.com/etng/crxJsonMate`
 - Releases：`https://github.com/etng/crxJsonMate/releases`
-- Pages：`https://etng.github.io/crxJsonMate/`
+- 官方站点：`https://json-mate.0o666.xyz/`
 - 反馈问题：`https://github.com/etng/crxJsonMate/issues/new/choose`
 - 隐私说明：`https://json-mate.0o666.xyz/privacy.html`
