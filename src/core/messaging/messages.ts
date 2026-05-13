@@ -1,4 +1,5 @@
 import type { JsonMateSettings } from '../settings/schema';
+import type { TelemetryEventName } from '../telemetry/schema';
 
 export interface SetPendingJsonMessage {
   cmd: 'setPendingJson';
@@ -66,6 +67,11 @@ export interface LoadSettingsMessage {
   cmd: 'loadSettings';
 }
 
+export interface TrackTelemetryEventMessage {
+  cmd: 'trackTelemetryEvent';
+  eventName: TelemetryEventName;
+}
+
 export type JsonMateRuntimeMessage =
   | SetPendingJsonMessage
   | OpenWorkspaceLauncherMessage
@@ -81,4 +87,5 @@ export type JsonMateRuntimeMessage =
   | FetchSourceRawTextMessage
   | GetSelectionTextMessage
   | SaveSettingsMessage
-  | LoadSettingsMessage;
+  | LoadSettingsMessage
+  | TrackTelemetryEventMessage;

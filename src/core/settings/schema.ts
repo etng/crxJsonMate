@@ -23,6 +23,7 @@ export interface JsonMateSettings {
   sortKey: boolean | number;
   toolkitNavigation: string[];
   contextMenuEnabled: boolean;
+  telemetryEnabled: boolean;
   launchCount: number;
   initialized: boolean;
 }
@@ -52,6 +53,7 @@ export const defaultSettings: JsonMateSettings = {
   sortKey: 0,
   toolkitNavigation: [],
   contextMenuEnabled: true,
+  telemetryEnabled: true,
   launchCount: 0,
   initialized: true
 };

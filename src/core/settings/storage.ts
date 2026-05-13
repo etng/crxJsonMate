@@ -80,6 +80,7 @@ const normalizeSettingValue = <K extends keyof JsonMateSettings>(
     case 'minimalism':
     case 'showTextFormat':
     case 'contextMenuEnabled':
+    case 'telemetryEnabled':
     case 'initialized':
       return Boolean(value) as JsonMateSettings[K];
     case 'launchCount':

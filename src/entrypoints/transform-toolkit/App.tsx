@@ -162,6 +162,10 @@ export function App() {
   });
 
   useEffect(() => {
+    void browser.runtime.sendMessage({
+      cmd: 'trackTelemetryEvent',
+      eventName: 'toolkit_open'
+    } as const).catch(() => {});
     void syncLoadedSettings();
   }, [syncLoadedSettings]);
 

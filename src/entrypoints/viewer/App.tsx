@@ -1789,6 +1789,10 @@ export function App() {
       : inputText;
 
     try {
+      void browser.runtime.sendMessage({
+        cmd: 'trackTelemetryEvent',
+        eventName: 'toolkit_open'
+      } as const).catch(() => {});
       await browser.runtime.sendMessage({
         cmd: 'setPendingJson',
         data: candidate || null
@@ -2182,6 +2186,10 @@ export function App() {
   });
 
   useEffect(() => {
+    void browser.runtime.sendMessage({
+      cmd: 'trackTelemetryEvent',
+      eventName: 'viewer_open'
+    } as const).catch(() => {});
     void bootViewer();
   }, []);
 

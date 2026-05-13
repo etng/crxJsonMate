@@ -296,8 +296,21 @@ select {
   gap: 16px;
 }
 
+.notePanelBlock {
+  flex-direction: column;
+}
+
 .notePanel strong {
   max-width: 320px;
+}
+
+.notePanelBlock strong {
+  max-width: none;
+}
+
+.notePanel span {
+  color: var(--text-soft);
+  line-height: 1.5;
 }
 
 .notePanel code {

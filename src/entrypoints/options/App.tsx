@@ -26,8 +26,14 @@ const supportLinks = [
   },
   {
     key: 'feedback',
-    href: 'https://json-mate.0o666.xyz/#feedback',
-    caption: 'json-mate.0o666.xyz/#feedback',
+    href: 'https://github.com/etng/crxJsonMate/issues/new/choose',
+    caption: 'github.com/etng/crxJsonMate/issues',
+    external: true
+  },
+  {
+    key: 'privacyPolicy',
+    href: 'https://json-mate.0o666.xyz/privacy.html',
+    caption: 'json-mate.0o666.xyz/privacy.html',
     external: true
   },
   {
@@ -434,6 +440,25 @@ export function App() {
             onChange={(value) => void persistSetting('rememberNodeState', value)}
             title={messages.rememberNodeState}
           />
+        </section>
+
+        <section className="card">
+          <div className="cardHeading">
+            <p className="eyebrow">{messages.sectionPrivacyEyebrow}</p>
+            <h2>{messages.sectionPrivacy}</h2>
+          </div>
+
+          <ToggleRow
+            checked={settings.telemetryEnabled}
+            description={messages.telemetryDesc}
+            onChange={(value) => void persistSetting('telemetryEnabled', value)}
+            title={messages.telemetry}
+          />
+
+          <div className="notePanel notePanelBlock">
+            <strong>{messages.telemetryScopeTitle}</strong>
+            <span>{messages.telemetryScopeDesc}</span>
+          </div>
         </section>
 
         <aside className="card supportCard">

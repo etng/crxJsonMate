@@ -1,6 +1,10 @@
 import { browser } from '#imports';
 import { parseRawPayload } from '@/core/detector/raw-payload';
 import { loadSettings, saveSettings } from '@/core/settings/storage';
+import {
+  clearTelemetryLocalState,
+  trackTelemetryEvent
+} from '@/core/telemetry/client';
 import type { JsonMateRuntimeMessage } from '@/core/messaging/messages';
 
 const CONTEXT_MENU_IDS = [
@@ -226,14 +230,28 @@ const handleContextMenuClick = async (
 };
 
 export default defineBackground(() => {
-  browser.runtime.onInstalled.addListener(() => {
+  browser.runtime.onInstalled.addListener((details) => {
     void rebuildContextMenus();
+    if (details.reason === 'install' || details.reason === 'update') {
+      void trackTelemetryEvent(details.reason, {
+        force: true,
+        previousVersion: details.previousVersion
+      });
+    }
+    void trackTelemetryEvent('daily_active');
   });
 
   browser.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === 'local' && Object.prototype.hasOwnProperty.call(changes, 'contextMenuEnabled')) {
       void rebuildContextMenus();
     }
+    if (areaName === 'local' && changes.telemetryEnabled?.newValue === false) {
+      void clearTelemetryLocalState();
+    }
+  });
+
+  browser.runtime.onStartup.addListener(() => {
+    void trackTelemetryEvent('daily_active');
   });
 
   browser.action.onClicked.addListener((tab) => {
@@ -279,10 +297,14 @@ export default defineBackground(() => {
         return {};
       case 'loadSettings':
         return loadSettings();
+      case 'trackTelemetryEvent':
+        await trackTelemetryEvent(request.eventName);
+        return {};
       default:
         return undefined;
     }
   });
 
   void rebuildContextMenus();
+  void trackTelemetryEvent('daily_active');
 });

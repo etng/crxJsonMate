@@ -95,8 +95,14 @@ JSON Mate 是一个面向真实调试场景的 JSON 浏览器扩展。它把 JSO
 
 JSON Mate 的核心能力是识别并渲染页面中的 JSON 内容，以及提供本地转换工具。扩展权限用于页面 JSON 检测、设置存储和相关页面交互。
 
+匿名使用统计默认开启，可在设置页关闭。统计只发送随机匿名安装 ID、扩展版本、语言、粗粒度浏览器/系统类型，以及按天限频的 `install`、`update`、`daily_active`、`viewer_open`、`toolkit_open` 事件。不会发送 JSON 内容、API 响应体、页面 URL、域名、搜索词、转换输入/输出或 JSON path。
+
+如果遇到问题，请优先使用 GitHub Issues，并在反馈前脱敏示例数据。
+
 ## 链接
 
 - 项目仓库：`https://github.com/etng/crxJsonMate`
 - Releases：`https://github.com/etng/crxJsonMate/releases`
 - Pages：`https://etng.github.io/crxJsonMate/`
+- 反馈问题：`https://github.com/etng/crxJsonMate/issues/new/choose`
+- 隐私说明：`https://json-mate.0o666.xyz/privacy.html`

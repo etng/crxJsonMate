@@ -1,0 +1,30 @@
+name: Feature request
+description: Suggest an improvement for JSON Mate.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use case
+      description: What workflow would this improve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the behavior or interface you would expect.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Current JSON Mate version
+      placeholder: "0.2.4"
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Avoid including private JSON, URLs, tokens, or API responses.
