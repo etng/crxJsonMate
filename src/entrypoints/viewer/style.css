@@ -716,6 +716,11 @@ textarea {
   display: none;
 }
 
+.viewerSourceCard {
+  display: grid;
+  gap: 16px;
+}
+
 .jmViewerCanvasLauncher {
   min-height: calc(100vh - 64px);
   padding: 40px 24px 32px;
@@ -774,13 +779,13 @@ textarea {
 
 .viewerSourceCard.isLauncherStage {
   display: grid;
-  gap: 0;
+  gap: 16px;
 }
 
 .viewerLauncherQuickStart {
   display: grid;
   gap: 14px;
-  margin-bottom: 16px;
+  margin-bottom: 0;
   padding: 16px 18px;
   border-radius: 18px;
   border: 1px solid rgba(26, 58, 50, 0.1);

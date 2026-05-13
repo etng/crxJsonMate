@@ -23,6 +23,10 @@ let pendingViewerJsonText: string | null = null;
 let pendingViewerInputText: string | null = null;
 let contextMenuRebuildTask = Promise.resolve();
 
+const ignoreAsyncError = (task: Promise<unknown>) => {
+  void task.catch(() => {});
+};
+
 const setPendingViewerJson = async (jsonText: string | null | undefined) => {
   pendingViewerJsonText = jsonText || null;
   await browser.storage.local.set({
@@ -180,23 +184,13 @@ const handleActionClick = async (tab: RuntimeTabRef) => {
   await openWorkspaceLauncher(selectedPayload ? { sourceUrl: tab.url || null } : undefined);
 };
 
-const createContextMenuItem = (item: typeof CONTEXT_MENU_IDS[number]) => new Promise<void>((resolve, reject) => {
-  browser.contextMenus.create(
-    {
-      id: item.id,
-      title: item.title,
-      contexts: [...item.contexts]
-    },
-    () => {
-      const runtimeError = browser.runtime.lastError;
-      if (runtimeError) {
-        reject(new Error(runtimeError.message));
-        return;
-      }
-      resolve();
-    }
-  );
-});
+const createContextMenuItem = async (item: typeof CONTEXT_MENU_IDS[number]) => {
+  await browser.contextMenus.create({
+    id: item.id,
+    title: item.title,
+    contexts: [...item.contexts]
+  });
+};
 
 const rebuildContextMenus = async () => {
   contextMenuRebuildTask = contextMenuRebuildTask
@@ -231,35 +225,35 @@ const handleContextMenuClick = async (
 
 export default defineBackground(() => {
   browser.runtime.onInstalled.addListener((details) => {
-    void rebuildContextMenus();
+    ignoreAsyncError(rebuildContextMenus());
     if (details.reason === 'install' || details.reason === 'update') {
-      void trackTelemetryEvent(details.reason, {
+      ignoreAsyncError(trackTelemetryEvent(details.reason, {
         force: true,
         previousVersion: details.previousVersion
-      });
+      }));
     }
-    void trackTelemetryEvent('daily_active');
+    ignoreAsyncError(trackTelemetryEvent('daily_active'));
   });
 
   browser.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === 'local' && Object.prototype.hasOwnProperty.call(changes, 'contextMenuEnabled')) {
-      void rebuildContextMenus();
+      ignoreAsyncError(rebuildContextMenus());
     }
     if (areaName === 'local' && changes.telemetryEnabled?.newValue === false) {
-      void clearTelemetryLocalState();
+      ignoreAsyncError(clearTelemetryLocalState());
     }
   });
 
   browser.runtime.onStartup.addListener(() => {
-    void trackTelemetryEvent('daily_active');
+    ignoreAsyncError(trackTelemetryEvent('daily_active'));
   });
 
   browser.action.onClicked.addListener((tab) => {
-    void handleActionClick(tab);
+    ignoreAsyncError(handleActionClick(tab));
   });
 
   browser.contextMenus.onClicked.addListener((info, tab) => {
-    void handleContextMenuClick(info, tab);
+    ignoreAsyncError(handleContextMenuClick(info, tab));
   });
 
   browser.runtime.onMessage.addListener(async (request: JsonMateRuntimeMessage) => {
@@ -305,6 +299,6 @@ export default defineBackground(() => {
     }
   });
 
-  void rebuildContextMenus();
-  void trackTelemetryEvent('daily_active');
+  ignoreAsyncError(rebuildContextMenus());
+  ignoreAsyncError(trackTelemetryEvent('daily_active'));
 });

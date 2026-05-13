@@ -1,5 +1,6 @@
 import { browser } from '#imports';
 import { startTransition, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
+import type { JsonMateRuntimeMessage } from '@/core/messaging/messages';
 import { toolkitToolMap, toolkitTools, getLocalizedTool, toolMatchesQuery, dedupeToolIds } from '@/core/toolkit/definitions';
 import { type JsonMateSettings } from '@/core/settings/schema';
 import { loadSettings, saveSettings } from '@/core/settings/storage';
@@ -12,6 +13,17 @@ import { getToolkitMessages } from './messages';
 import './style.css';
 
 const queryParams = new URLSearchParams(window.location.search);
+
+const sendRuntimeMessage = async <T = unknown>(message: JsonMateRuntimeMessage): Promise<T | null> => {
+  try {
+    if (!browser.runtime?.sendMessage) {
+      return null;
+    }
+    return await browser.runtime.sendMessage(message) as T;
+  } catch {
+    return null;
+  }
+};
 
 const resolveContextValue = (isEmbedded: boolean) => {
   if (!isEmbedded || window.parent === window) {
@@ -97,18 +109,16 @@ export function App() {
   });
 
   const publishTransformedValue = useEffectEvent((value: string) => {
-    void browser.runtime.sendMessage({
-      cmd: 'toolkitReturnValue',
-      data: value
-    } as const).catch(() => {
-      // The viewer can still recover from the pending payload fallback.
-    });
+    if (isEmbedded && window.parent !== window) {
+      window.parent.postMessage({
+        cmd: 'toolkitReturnValue',
+        data: value
+      }, window.location.origin);
+    }
 
-    void browser.runtime.sendMessage({
+    void sendRuntimeMessage({
       cmd: 'setPendingJson',
       data: value
-    } as const).catch(() => {
-      // Ignore runtime failures when the extension bridge is unavailable.
     });
   });
 
@@ -151,21 +161,17 @@ export function App() {
   });
 
   const applyRuntimeSeed = useEffectEvent(async (embedded: boolean) => {
-    try {
-      const pendingValue = await browser.runtime.sendMessage({ cmd: 'getPendingJson' } as const);
-      if (typeof pendingValue === 'string' && pendingValue) {
-        applyCurrentValue(pendingValue);
-      }
-    } catch {
-      // Runtime messaging is optional in local page development.
+    const pendingValue = await sendRuntimeMessage<string>({ cmd: 'getPendingJson' });
+    if (typeof pendingValue === 'string' && pendingValue) {
+      applyCurrentValue(pendingValue);
     }
   });
 
   useEffect(() => {
-    void browser.runtime.sendMessage({
+    void sendRuntimeMessage({
       cmd: 'trackTelemetryEvent',
       eventName: 'toolkit_open'
-    } as const).catch(() => {});
+    });
     void syncLoadedSettings();
   }, [syncLoadedSettings]);
 

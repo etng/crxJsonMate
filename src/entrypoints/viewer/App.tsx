@@ -1,6 +1,7 @@
 import { browser } from '#imports';
 import { startTransition, useDeferredValue, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
+import type { JsonMateRuntimeMessage } from '@/core/messaging/messages';
 import { defaultSettings, type JsonMateSettings } from '@/core/settings/schema';
 import { loadSettings, saveSettings } from '@/core/settings/storage';
 import {
@@ -87,6 +88,23 @@ const viewerPanelMaxViewportRatio = 0.5;
 const viewerPanelViewportInset = 24;
 const viewerPanelKeyboardStep = 16;
 const viewerPanelLargeKeyboardStep = 48;
+
+const sendRuntimeMessage = async <T = unknown>(message: JsonMateRuntimeMessage): Promise<T | null> => {
+  try {
+    if (!browser.runtime?.sendMessage) {
+      return null;
+    }
+    return await browser.runtime.sendMessage(message) as T;
+  } catch {
+    return null;
+  }
+};
+
+const notifyEmbeddedPayloadLoaded = () => {
+  if (initialIframeMode && window.parent !== window) {
+    window.parent.postMessage({ cmd: 'viewerPayloadLoaded' }, '*');
+  }
+};
 
 const encodeDetachedViewerPayloadHash = (payload: NonNullable<EmbeddedViewerMessage['json']>) => {
   const encodedJson = encodeURIComponent(JSON.stringify(payload));
@@ -1304,13 +1322,9 @@ export function App() {
       return;
     }
 
-    try {
-      const pendingValue = await browser.runtime.sendMessage({ cmd: 'getPendingJson' } as const);
-      if (typeof pendingValue === 'string' && pendingValue) {
-        parseCurrentInput('pending', pendingValue);
-      }
-    } catch {
-      // Ignore when the page is opened outside the extension runtime.
+    const pendingValue = await sendRuntimeMessage<string>({ cmd: 'getPendingJson' });
+    if (typeof pendingValue === 'string' && pendingValue) {
+      parseCurrentInput('pending', pendingValue);
     }
   });
 
@@ -1348,8 +1362,8 @@ export function App() {
         }
       }
 
-      const pendingValue = await browser.runtime.sendMessage(
-        { cmd: iframeMode && !isLauncherMode ? 'peekPendingJson' : 'getPendingJson' } as const
+      const pendingValue = await sendRuntimeMessage<string>(
+        { cmd: iframeMode && !isLauncherMode ? 'peekPendingJson' : 'getPendingJson' }
       );
       if (!hasLoadedPendingPayload && typeof pendingValue === 'string' && pendingValue) {
         const parsed = parseViewerInput(pendingValue, loadedSettings.jsonEngine, 'pending');
@@ -1361,7 +1375,7 @@ export function App() {
       }
 
       if (!hasLoadedPendingPayload && isLauncherMode) {
-        const pendingInputValue = await browser.runtime.sendMessage({ cmd: 'getPendingInput' } as const);
+        const pendingInputValue = await sendRuntimeMessage<string>({ cmd: 'getPendingInput' });
         if (typeof pendingInputValue === 'string' && pendingInputValue) {
           inputTextRef.current = pendingInputValue;
           setInputText(pendingInputValue);
@@ -1369,7 +1383,7 @@ export function App() {
       }
 
       if (!iframeMode && !hasLoadedPendingPayload) {
-        const consumedPendingValue = await browser.runtime.sendMessage({ cmd: 'getPendingJson' } as const);
+        const consumedPendingValue = await sendRuntimeMessage<string>({ cmd: 'getPendingJson' });
         if (typeof consumedPendingValue === 'string' && consumedPendingValue) {
           const parsed = parseViewerInput(consumedPendingValue, loadedSettings.jsonEngine, 'pending');
           if (parsed) {
@@ -1789,14 +1803,14 @@ export function App() {
       : inputText;
 
     try {
-      void browser.runtime.sendMessage({
+      void sendRuntimeMessage({
         cmd: 'trackTelemetryEvent',
         eventName: 'toolkit_open'
-      } as const).catch(() => {});
-      await browser.runtime.sendMessage({
+      });
+      await sendRuntimeMessage({
         cmd: 'setPendingJson',
         data: candidate || null
-      } as const);
+      });
       if (isIframeMode) {
         setIsToolkitOpen(true);
         return;
@@ -1953,10 +1967,10 @@ export function App() {
     }
 
     try {
-      await browser.runtime.sendMessage({
+      await sendRuntimeMessage({
         cmd: 'setPendingJson',
         data: candidate
-      } as const);
+      });
 
       const viewerUrl = new URL(browser.runtime.getURL('/viewer.html'));
       viewerUrl.searchParams.set('type', 'iframe');
@@ -2027,9 +2041,9 @@ export function App() {
 
         window.addEventListener('message', handleDetachedViewerReady);
       } else {
-        await browser.runtime.sendMessage({
+        await sendRuntimeMessage({
           cmd: 'openWorkspaceLauncher'
-        } as const);
+        });
       }
 
       setStatusText(messages.detachedViewerOpened);
@@ -2186,10 +2200,10 @@ export function App() {
   });
 
   useEffect(() => {
-    void browser.runtime.sendMessage({
+    void sendRuntimeMessage({
       cmd: 'trackTelemetryEvent',
       eventName: 'viewer_open'
-    } as const).catch(() => {});
+    });
     void bootViewer();
   }, []);
 
@@ -2476,6 +2490,7 @@ export function App() {
       && inputTextRef.current === resolved.payload.string
     ) {
       pendingEmbeddedMessageRef.current = null;
+      notifyEmbeddedPayloadLoaded();
       return;
     }
 
@@ -2484,6 +2499,7 @@ export function App() {
       applyViewerState(resolved, resolved.payload.string);
       setStatusText(messages.statusReady);
     });
+    notifyEmbeddedPayloadLoaded();
   });
 
   useEffect(() => {
@@ -2581,6 +2597,10 @@ export function App() {
 
       applyToolkitReturnValue(typeof message.data === 'string' ? message.data : '');
     };
+
+    if (!browser.runtime?.onMessage) {
+      return;
+    }
 
     browser.runtime.onMessage.addListener(handleRuntimeMessage);
     return () => {
@@ -2690,6 +2710,55 @@ export function App() {
   const viewerCollectionNames = getViewerCollectionNames(viewerLibrary.collections);
   const canCreateNewCollection = viewerCollectionNames.length < getViewerCollectionLimit();
   const visibleCollectionCount = viewerCollectionNames.length;
+  const isLauncherEmptyState = isLauncherMode && !viewerState;
+  const sourceInputControls = (
+    <>
+      <textarea
+        className="viewerTextarea viewerTextareaDocument"
+        onChange={(event) => setInputText(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            parseCurrentInput('manual');
+          }
+        }}
+        placeholder='{"root": 3}'
+        ref={sourceInputRef}
+        spellCheck={false}
+        value={inputText}
+      />
+      <div className="viewerToolbar">
+        <button className="viewerButton" onClick={() => parseCurrentInput('manual')} type="button">
+          {messages.parseInput}
+        </button>
+        {isIframeMode ? (
+          <button
+            className="viewerButton secondary"
+            disabled={!canOpenDetachedViewer}
+            id="openDetachedViewer"
+            onClick={() => void openDetachedViewerForCurrentDocument()}
+            type="button"
+          >
+            {messages.openDetachedViewer}
+          </button>
+        ) : null}
+        <button
+          className="viewerButton secondary"
+          onClick={() => {
+            setInputText('');
+            setEditorText('');
+            setErrorText('');
+            setViewerState(null);
+            setStatusText('');
+            setSelectedPath([]);
+          }}
+          type="button"
+        >
+          {messages.clearInput}
+        </button>
+      </div>
+    </>
+  );
   const sourceCardSection = (
     <section className={showLauncherStage ? 'viewerCard viewerSourceCard isLauncherStage' : sourceCardClassName}>
       <div className="viewerCardHeader">
@@ -2698,7 +2767,8 @@ export function App() {
           <p>{messages.rawInputHint}</p>
         </div>
       </div>
-      {isLauncherMode && !viewerState ? (
+      {isLauncherEmptyState ? sourceInputControls : null}
+      {isLauncherEmptyState ? (
         <div className="viewerLauncherLayout">
           <div className="viewerLauncherLaunchStack">
             <div className="viewerLauncherQuickStart">
@@ -2821,50 +2891,7 @@ export function App() {
           </aside>
         </div>
       ) : null}
-      <textarea
-        className="viewerTextarea viewerTextareaDocument"
-        onChange={(event) => setInputText(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
-            parseCurrentInput('manual');
-          }
-        }}
-        placeholder='{"root": 3}'
-        ref={sourceInputRef}
-        spellCheck={false}
-        value={inputText}
-      />
-      <div className="viewerToolbar">
-        <button className="viewerButton" onClick={() => parseCurrentInput('manual')} type="button">
-          {messages.parseInput}
-        </button>
-        {isIframeMode ? (
-          <button
-            className="viewerButton secondary"
-            disabled={!canOpenDetachedViewer}
-            id="openDetachedViewer"
-            onClick={() => void openDetachedViewerForCurrentDocument()}
-            type="button"
-          >
-            {messages.openDetachedViewer}
-          </button>
-        ) : null}
-        <button
-          className="viewerButton secondary"
-          onClick={() => {
-            setInputText('');
-            setEditorText('');
-            setErrorText('');
-            setViewerState(null);
-            setStatusText('');
-            setSelectedPath([]);
-          }}
-          type="button"
-        >
-          {messages.clearInput}
-        </button>
-      </div>
+      {isLauncherEmptyState ? null : sourceInputControls}
     </section>
   );
 

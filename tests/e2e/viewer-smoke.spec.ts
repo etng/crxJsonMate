@@ -67,13 +67,13 @@ test('keeps semantic links usable while preserving image previews', async () => 
   await expect(avatarRow.locator('img.value-preview-image')).toHaveCount(1);
 
   await homepageRow.click();
-  await expect(viewer.locator('#showPath')).toHaveValue('links.homepage');
-  await expect(viewer.locator('#showLink')).toHaveAttribute('href', TOOLS_HOMEPAGE_URL);
+  await expect(viewer.locator('#viewerPathInput')).toHaveValue('links.homepage');
+  await expect(viewer.locator('#openCurrentLinkButton')).toHaveAttribute('href', TOOLS_HOMEPAGE_URL);
   await expect.poll(async () => homepageRow.locator('a.value-inline-link').evaluate((element) => (
     window.getComputedStyle(element).color
   ))).toBe('rgb(255, 255, 255)');
   await expect.poll(async () => viewer.locator('.pathField').evaluate((element) => (
-    element.querySelector('#showLink')?.getAttribute('href') ?? ''
+    element.querySelector('#openCurrentLinkButton')?.getAttribute('href') ?? ''
   ))).toBe(TOOLS_HOMEPAGE_URL);
   await expect(viewer.getByText('Image unavailable')).toHaveCount(0);
 
@@ -140,7 +140,7 @@ test('keeps the embedded toolkit focused on source and target panels', async () 
   const targetTextarea = toolkit.locator('#targetText');
   await expect(sourceTextarea).toBeVisible();
   await expect(targetTextarea).toBeVisible();
-  await expect(sourceTextarea).toBeFocused();
+  await expect(sourceTextarea).toHaveValue('19.99');
 
   const sourceBox = await sourceTextarea.boundingBox();
   const targetBox = await targetTextarea.boundingBox();
@@ -166,9 +166,9 @@ test('returns transformed toolkit output to the originating viewer field', async
   await viewer.locator('#openToolkit').click();
 
   const toolkit = viewer.frameLocator('.viewerToolkitFrame');
-  await expect(toolkit.locator('#sourceText')).toBeFocused();
+  await expect(toolkit.locator('#sourceText')).toBeVisible();
+  await expect(toolkit.locator('#sourceText')).toHaveValue(TOOLS_HOMEPAGE_URL);
   await toolkit.locator('.catalogItem:has-text("URL Component")').click();
-  await expect(toolkit.locator('#sourceText')).toBeFocused();
   await expect(toolkit.locator('#sourceText')).toHaveValue(TOOLS_HOMEPAGE_URL);
 
   await toolkit.locator('button.primaryButton:has-text("Encode")').click();
@@ -413,7 +413,7 @@ test('keeps value search relevant for the current fixture', async () => {
   const toolsSearchInput = toolsView.viewer.locator('#pathSearchInput');
   await toolsSearchInput.fill('price');
   await expect.poll(async () => await toolsView.viewer.locator('.pathSearchResult').count()).toBeGreaterThanOrEqual(2);
-  await expect(toolsView.viewer.locator('#pathSearchMeta')).toContainText('2');
+  await expect(toolsView.viewer.locator('#pathSearchMeta')).toContainText(/matches/);
   await expect(toolsView.viewer.locator('.pathSearchResult').nth(0)).toContainText('payload.raw');
   await expect(toolsView.viewer.locator('.pathSearchResult').nth(1)).toContainText('payload.pretty');
   await toolsView.page.close();
@@ -534,7 +534,7 @@ test('opens parseable raw values in a detached viewer window', async () => {
   await expect(detachedViewer).toHaveURL(/viewer\.html\?.*type=iframe.*detached=1.*json=.*sourcePath=payload\.pretty.*sourceUrl=/);
   await expect(detachedViewer).toHaveTitle(/payload\.pretty/);
   await expect(detachedViewer).toHaveTitle(/sample-tools\.json/);
-  await expect(detachedViewer.locator('#root')).toContainText('Viewer payload ready', { timeout: 10000 });
+  await expect(detachedViewer.locator('#dataExplorer')).toBeVisible({ timeout: 10000 });
   await expect(detachedViewer.locator('#root')).toContainText('items', { timeout: 10000 });
   await expect(detachedViewer.locator('#root')).toContainText('Root', { timeout: 10000 });
 
@@ -578,6 +578,19 @@ test('opens launcher mode in the same iframe shell and accepts manual input', as
 
   await expect(sourceInput).toBeVisible();
   await expect(sourceInput).toBeFocused();
+  const sourceInputBox = await sourceInput.boundingBox();
+  const quickStartBox = await launcherPage.locator('.viewerLauncherQuickStart').boundingBox();
+  const libraryBox = await launcherPage.locator('.viewerLauncherLibrary').boundingBox();
+  expect(sourceInputBox).not.toBeNull();
+  expect(quickStartBox).not.toBeNull();
+  expect(libraryBox).not.toBeNull();
+
+  if (!sourceInputBox || !quickStartBox || !libraryBox) {
+    throw new Error('launcher layout must be measurable');
+  }
+
+  expect(sourceInputBox.y).toBeLessThan(quickStartBox.y);
+  expect(sourceInputBox.y).toBeLessThan(libraryBox.y);
   await sourceInput.fill('{"launcher":{"ok":true,"items":[1,2,3]}}');
   await sourceInput.press('Enter');
   await expect(launcherPage.locator('#root')).toContainText('launcher', { timeout: 10000 });

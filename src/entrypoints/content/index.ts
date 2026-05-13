@@ -276,6 +276,52 @@ export default defineContentScript({
       inPageViewerRendered = true;
       const tip = ensureLoadingTip();
       const frame = document.createElement('iframe');
+      const extensionOrigin = browser.runtime.getURL('').slice(0, -1);
+      const payloadRetryTimers: number[] = [];
+      const postPayloadToFrame = () => {
+        frame.contentWindow?.postMessage({
+          cmd: 'postJson',
+          json: payload
+        }, '*');
+      };
+      const queuePayloadRetries = () => {
+        for (const delayMs of [0, 120, 360, 900, 1800]) {
+          payloadRetryTimers.push(window.setTimeout(postPayloadToFrame, delayMs));
+        }
+      };
+      const cleanupViewerMessage = () => {
+        window.removeEventListener('message', handleViewerMessage);
+        for (const timerId of payloadRetryTimers) {
+          window.clearTimeout(timerId);
+        }
+      };
+
+      const handleViewerMessage = (event: MessageEvent) => {
+        if (event.origin !== extensionOrigin) {
+          return;
+        }
+
+        if (event.data?.cmd === 'viewerLoadedOk') {
+          hideLoadingTip();
+          postPayloadToFrame();
+          return;
+        }
+
+        if (event.data?.cmd === 'viewerPayloadLoaded') {
+          hideLoadingTip();
+          cleanupViewerMessage();
+          return;
+        }
+
+        if (event.data?.cmd === 'viewerLoadedError') {
+          tip.textContent = `JSON Mate error: ${String(event.data.msg || 'Unknown error')}`;
+          cleanupViewerMessage();
+        }
+      };
+
+      window.addEventListener('message', handleViewerMessage);
+      payloadRetryTimers.push(window.setTimeout(cleanupViewerMessage, 10000));
+      frame.addEventListener('load', queuePayloadRetries, { once: true });
       frame.src = getViewerUrl();
       frame.style.cssText = [
         'position:fixed',
@@ -292,37 +338,6 @@ export default defineContentScript({
       document.body.style.minHeight = '100%';
       document.body.style.background = '#fff';
       document.body.appendChild(frame);
-
-      const extensionOrigin = browser.runtime.getURL('').slice(0, -1);
-      const cleanupViewerMessage = () => {
-        window.removeEventListener('message', handleViewerMessage);
-      };
-
-      const handleViewerMessage = (event: MessageEvent) => {
-        if (event.origin !== extensionOrigin) {
-          return;
-        }
-
-        if (event.data?.cmd === 'viewerLoadedOk') {
-          hideLoadingTip();
-          frame.contentWindow?.postMessage({
-            cmd: 'postJson',
-            json: payload
-          }, '*');
-          return;
-        }
-
-        if (event.data?.cmd === 'viewerLoadedError') {
-          tip.textContent = `JSON Mate error: ${String(event.data.msg || 'Unknown error')}`;
-          cleanupViewerMessage();
-          return;
-        }
-
-        hideLoadingTip();
-        cleanupViewerMessage();
-      };
-
-      window.addEventListener('message', handleViewerMessage);
     };
 
     const createView = () => {
