@@ -3,10 +3,11 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>JSON Mate</title>
+		<title data-i18n="home.title">JSON Mate</title>
 		<meta
 			name="description"
-			content="JSON Mate 是一个面向调试场景的 JSON 浏览器扩展，支持树形查看、局部编辑、路径定位、文本转换和匿名使用统计。"
+			content="JSON Mate 是一个面向调试场景的 JSON 浏览器扩展，支持树形查看、局部编辑、路径复制、文本转换和启动器。"
+			data-i18n-attr="content:home.metaDescription"
 		/>
 		<link rel="stylesheet" href="styles.css" />
 	</head>
@@ -16,138 +17,159 @@
 				<span class="brand-mark">JM</span>
 				<span>JSON Mate</span>
 			</a>
-			<nav class="site-nav" aria-label="Primary">
-				<a href="#viewer">Viewer</a>
-				<a href="#toolkit">Toolkit</a>
-				<a href="#install">Install</a>
-				<a href="privacy.html">Privacy</a>
-			</nav>
+			<div class="header-actions">
+				<nav class="site-nav" aria-label="Primary" data-i18n-attr="aria-label:nav.primaryLabel">
+					<a href="#features" data-i18n="nav.features">功能</a>
+					<a href="#install" data-i18n="nav.install">安装</a>
+					<a href="https://github.com/etng/crxJsonMate/releases" data-i18n="nav.releases">版本</a>
+					<a href="https://github.com/etng/crxJsonMate">GitHub</a>
+				</nav>
+				<div class="language-switch" aria-label="Language" data-i18n-attr="aria-label:language.label">
+					<button type="button" data-lang-option="zh" aria-pressed="true">中</button>
+					<button type="button" data-lang-option="en" aria-pressed="false">EN</button>
+				</div>
+			</div>
 		</header>
 
 		<main>
 			<section class="hero">
-				<img
-					class="hero-image"
-					src="assets/json-mate-viewer.png"
-					alt="JSON Mate viewer showing a JSON tree, selected value inspector, quick tools and display options."
-				/>
-				<div class="hero-overlay" aria-hidden="true"></div>
 				<div class="hero-copy">
-					<p class="eyebrow">Chrome JSON Viewer Extension</p>
-					<h1><span>JSON 页面不要</span><span>再靠裸文本硬看。</span></h1>
-					<p class="summary">
-						JSON Mate 把页面识别、树形浏览、局部编辑、路径复制、图片预览和文本转换放到同一个工作区里。适合每天调接口、查 payload、看日志的人。
+					<p class="eyebrow" data-i18n="home.hero.eyebrow">浏览器 JSON 扩展</p>
+					<h1 data-i18n="home.hero.title">在浏览器里查看、编辑和转换 JSON。</h1>
+					<p class="hero-summary" data-i18n="home.hero.summary">
+						打开接口响应后直接进入树形视图。右侧面板可查看路径和值，快捷工具可以处理 URL、Base64、Unicode、HTML 和大小写转换。
 					</p>
 					<div class="hero-actions">
-						<a class="primary-link" href="https://github.com/etng/crxJsonMate/releases">Download latest</a>
-						<a class="secondary-link" href="https://github.com/etng/crxJsonMate/issues/new/choose">Report issue</a>
+						<a class="primary-link" href="https://github.com/etng/crxJsonMate/releases" data-i18n="home.hero.download">下载 v0.3.1</a>
+						<a class="secondary-link" href="#install" data-i18n="home.hero.installOptions">查看安装方式</a>
 					</div>
-					<dl class="release-strip">
-						<div>
-							<dt>Current</dt>
-							<dd>v0.3.1</dd>
-						</div>
-						<div>
-							<dt>Distribution</dt>
-							<dd>GitHub Releases</dd>
-						</div>
-						<div>
-							<dt>Telemetry</dt>
-							<dd>Anonymous, opt-out</dd>
-						</div>
-					</dl>
+					<div class="release-note" aria-label="当前版本信息" data-i18n-attr="aria-label:home.hero.releaseLabel">
+						<span data-i18n="home.hero.current">当前版本：v0.3.1</span>
+						<span>Chrome MV3</span>
+						<span data-i18n="home.hero.manual">支持手动安装</span>
+					</div>
+				</div>
+				<figure class="product-shot">
+					<img
+						src="assets/json-mate-viewer.png"
+						alt="JSON Mate 工作区，左侧是树形视图，右侧是属性面板、快捷工具和显示选项。"
+						data-i18n-attr="alt:home.product.alt"
+					/>
+					<figcaption data-i18n="home.product.caption">树形视图、属性面板和快捷工具在同一工作区。</figcaption>
+				</figure>
+			</section>
+
+			<section class="install-section" id="install">
+				<div class="section-heading">
+					<div>
+						<p class="eyebrow" data-i18n="home.install.eyebrow">安装</p>
+						<h2 data-i18n="home.install.title">先用发布包安装，商店入口预留中。</h2>
+					</div>
+					<p class="section-summary" data-i18n="home.install.summary">
+						当前公开版本通过 GitHub 发布包分发。Chrome 和 Edge 可以手动加载解压后的扩展目录；后续商店上架后，这里会切换到对应入口。
+					</p>
+				</div>
+				<div class="install-grid" aria-label="安装渠道" data-i18n-attr="aria-label:home.install.gridLabel">
+					<a class="install-card available" href="https://github.com/etng/crxJsonMate/releases">
+						<span class="store-icon">ZIP</span>
+						<strong data-i18n="home.install.release.title">GitHub 发布包</strong>
+						<span data-i18n="home.install.release.description">下载最新 zip 包</span>
+						<em data-i18n="home.badges.available">可用</em>
+					</a>
+					<a class="install-card planned" href="https://chromewebstore.google.com/" aria-disabled="true">
+						<span class="store-icon chrome">C</span>
+						<strong data-i18n="home.install.chrome.title">Chrome 应用商店</strong>
+						<span data-i18n="home.install.chrome.description">Chrome 官方商店</span>
+						<em data-i18n="home.badges.planned">规划中</em>
+					</a>
+					<a class="install-card planned" href="https://microsoftedge.microsoft.com/addons/" aria-disabled="true">
+						<span class="store-icon edge">E</span>
+						<strong data-i18n="home.install.edge.title">Edge 加载项</strong>
+						<span data-i18n="home.install.edge.description">Microsoft Edge 商店</span>
+						<em data-i18n="home.badges.planned">规划中</em>
+					</a>
+					<a class="install-card planned" href="https://addons.mozilla.org/" aria-disabled="true">
+						<span class="store-icon firefox">F</span>
+						<strong data-i18n="home.install.firefox.title">Firefox 扩展</strong>
+						<span data-i18n="home.install.firefox.description">Firefox 版本评估中</span>
+						<em data-i18n="home.badges.planned">规划中</em>
+					</a>
+					<a class="install-card" href="https://github.com/etng/crxJsonMate">
+						<span class="store-icon source">GH</span>
+						<strong data-i18n="home.install.source.title">源代码</strong>
+						<span data-i18n="home.install.source.description">查看源码和问题反馈</span>
+						<em data-i18n="home.badges.open">打开</em>
+					</a>
 				</div>
 			</section>
 
-			<section class="problem-band">
-				<div>
-					<p class="section-kicker">Built for real debugging</p>
-					<h2>从“能格式化”到“能干活”。</h2>
+			<section class="feature-section" id="features">
+				<div class="section-heading compact">
+					<div>
+						<p class="eyebrow" data-i18n="home.features.eyebrow">功能</p>
+						<h2 data-i18n="home.features.title">常用调试动作放在同一个工作区。</h2>
+					</div>
 				</div>
-				<p>
-					普通 JSON viewer 只解决缩进。JSON Mate 更关注调试时反复发生的动作：定位一个字段、复制路径、判断值类型、把时间戳转成人话、把 URL decode 后再回填。
-				</p>
+				<div class="feature-grid">
+					<article class="feature-card">
+						<span>01</span>
+						<h3 data-i18n="home.features.tree.title">树形查看</h3>
+						<p data-i18n="home.features.tree.description">打开 JSON URL 后自动接管页面，树形查看数组、对象和原始值，支持选中节点后继续操作。</p>
+					</article>
+					<article class="feature-card">
+						<span>02</span>
+						<h3 data-i18n="home.features.inspector.title">属性面板</h3>
+						<p data-i18n="home.features.inspector.description">右侧面板显示路径、键、值和类型信息。面板宽度可拖动，适合宽屏调试。</p>
+					</article>
+					<article class="feature-card">
+						<span>03</span>
+						<h3 data-i18n="home.features.tools.title">快捷工具</h3>
+						<p data-i18n="home.features.tools.description">URL、Base64、Unicode、HTML、大小写等转换可以直接处理当前值，也能在弹窗里单独使用。</p>
+					</article>
+					<article class="feature-card">
+						<span>04</span>
+						<h3 data-i18n="home.features.launcher.title">启动器</h3>
+						<p data-i18n="home.features.launcher.description">点击扩展图标先看到输入框，再管理最近打开和收藏的 JSON 入口。</p>
+					</article>
+				</div>
 			</section>
 
-			<section class="capability-grid" id="viewer">
-				<article class="feature large">
-					<span class="feature-index">01</span>
-					<h2>Viewer workspace</h2>
-					<p>树和右侧工具面板并排工作。选中节点后直接编辑值、复制 path、打开 URL、预览图片，面板宽度也可以按屏幕拖动。</p>
-				</article>
-				<article class="feature" id="toolkit">
-					<span class="feature-index">02</span>
-					<h2>Quick tools</h2>
-					<p>常见转换不再跳出上下文。URL、Base64、Unicode、HTML、大小写等工具可以直接处理当前值并回写。</p>
-				</article>
-				<article class="feature">
-					<span class="feature-index">03</span>
-					<h2>Launcher library</h2>
-					<p>点击扩展图标先看到输入框，再看到最近打开和收藏集合。适合把常用 JSON endpoint 当工具入口管理。</p>
-				</article>
-				<article class="feature">
-					<span class="feature-index">04</span>
-					<h2>Syntax-aware editing</h2>
-					<p>JSON 高亮尊重字符串边界，不会把引号里的数字拆出来乱上色。编辑区和工具弹窗使用同一套高亮规则。</p>
-				</article>
-			</section>
-
-			<section class="workflow">
-				<div>
-					<p class="section-kicker">Workflow</p>
-					<h2>一个接口响应，几秒内变成可操作结构。</h2>
+			<section class="workflow-section">
+				<div class="workflow-copy">
+					<p class="eyebrow" data-i18n="home.workflow.eyebrow">使用流程</p>
+					<h2 data-i18n="home.workflow.title">打开响应，定位字段，再复制或转换。</h2>
+					<p data-i18n="home.workflow.summary">
+						JSON Mate 的页面结构围绕这几个动作设计。内容保留在浏览器本地；遥测端点只接收匿名使用统计。
+					</p>
 				</div>
-				<ol class="steps">
+				<ol class="workflow-list">
 					<li>
-						<strong>Open JSON URL</strong>
-						<span>自动识别页面中的 JSON，不需要复制到第三方网站。</span>
+						<strong data-i18n="home.workflow.open.title">打开 JSON</strong>
+						<span data-i18n="home.workflow.open.description">直接打开接口响应，或从启动器输入 JSON URL。</span>
 					</li>
 					<li>
-						<strong>Select value</strong>
-						<span>树上定位字段，右侧看到路径、key、原始值和可用工具。</span>
+						<strong data-i18n="home.workflow.select.title">选择字段</strong>
+						<span data-i18n="home.workflow.select.description">在树里选中字段，右侧面板同步显示路径和值。</span>
 					</li>
 					<li>
-						<strong>Transform or save</strong>
-						<span>转换当前值、打开嵌套 JSON、保存到收藏，或继续在 launcher 里管理。</span>
+						<strong data-i18n="home.workflow.tools.title">使用工具</strong>
+						<span data-i18n="home.workflow.tools.description">复制路径、打开 URL、预览图片、转换文本或编辑值。</span>
 					</li>
 				</ol>
-			</section>
-
-			<section class="install-grid" id="install">
-				<div class="install-panel">
-					<p class="section-kicker">Install</p>
-					<h2>先从 GitHub Release 用起来。</h2>
-					<ul class="install-list">
-						<li>
-							<strong>1. Download</strong>
-							<span>下载最新的 <code>json-mate-vX.Y.Z.zip</code>。</span>
-						</li>
-						<li>
-							<strong>2. Load unpacked</strong>
-							<span>解压后在 Chrome extensions 页面加载目录。</span>
-						</li>
-						<li>
-							<strong>3. Pin and inspect</strong>
-							<span>固定图标，打开任意 JSON URL 或直接进入 launcher。</span>
-						</li>
-					</ul>
-					<a class="primary-link" href="https://github.com/etng/crxJsonMate/releases">Open releases</a>
-				</div>
-				<div class="trust-panel">
-					<p class="section-kicker">Privacy</p>
-					<h2>匿名统计只看产品健康度。</h2>
-					<p>
-						默认开启匿名遥测，用来估算活跃安装、版本分布和核心入口使用。不会发送 JSON 内容、URL、搜索词或转换文本；可以随时关闭。
-					</p>
-					<a class="text-link" href="privacy.html">Read privacy details</a>
-				</div>
 			</section>
 		</main>
 
 		<footer class="site-footer">
-			<span>JSON Mate</span>
-			<a href="https://github.com/etng/crxJsonMate">GitHub</a>
-			<a href="https://github.com/etng/crxJsonMate/issues/new/choose">Issues</a>
+			<div>
+				<strong>JSON Mate</strong>
+				<span data-i18n="footer.tagline">开源 JSON 浏览器扩展。</span>
+			</div>
+			<nav aria-label="页脚" data-i18n-attr="aria-label:footer.label">
+				<a href="privacy.html" data-i18n="footer.privacy">隐私</a>
+				<a href="https://github.com/etng/crxJsonMate/issues/new/choose" data-i18n="footer.issues">问题反馈</a>
+				<a href="https://github.com/etng/crxJsonMate/releases" data-i18n="footer.releases">版本记录</a>
+			</nav>
 		</footer>
+		<script src="i18n.js"></script>
 	</body>
 </html>

@@ -3,53 +3,120 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>JSON Mate Privacy Policy</title>
+		<title data-i18n="privacy.title">JSON Mate 隐私说明</title>
 		<meta
 			name="description"
 			content="JSON Mate 隐私说明：扩展如何处理页面 JSON、匿名使用统计发送什么，以及如何关闭。"
+			data-i18n-attr="content:privacy.metaDescription"
 		/>
 		<link rel="stylesheet" href="styles.css" />
 	</head>
 	<body>
-		<main class="page-shell privacy-page">
-			<section class="install-card">
-				<p class="section-tag">Privacy</p>
-				<h1>JSON Mate 隐私说明</h1>
-				<p>
+		<header class="site-header">
+			<a class="brand" href="/">
+				<span class="brand-mark">JM</span>
+				<span>JSON Mate</span>
+			</a>
+			<div class="header-actions">
+				<nav class="site-nav" aria-label="Primary" data-i18n-attr="aria-label:nav.primaryLabel">
+					<a href="index.html#features" data-i18n="nav.features">功能</a>
+					<a href="index.html#install" data-i18n="nav.install">安装</a>
+					<a href="https://github.com/etng/crxJsonMate/releases" data-i18n="nav.releases">版本</a>
+					<a href="https://github.com/etng/crxJsonMate">GitHub</a>
+				</nav>
+				<div class="language-switch" aria-label="Language" data-i18n-attr="aria-label:language.label">
+					<button type="button" data-lang-option="zh" aria-pressed="true">中</button>
+					<button type="button" data-lang-option="en" aria-pressed="false">EN</button>
+				</div>
+			</div>
+		</header>
+
+		<main class="privacy-page">
+			<article class="privacy-card">
+				<p class="eyebrow" data-i18n="privacy.eyebrow">隐私</p>
+				<h1 data-i18n="privacy.heading">JSON Mate 隐私说明</h1>
+				<p data-i18n="privacy.intro">
 					JSON Mate 用于查看、编辑和转换 JSON 数据。扩展会在本地读取当前页面中的 JSON 内容来完成渲染和工具操作，但不会把 JSON 内容上传到 JSON Mate 的遥测服务。
 				</p>
-				<h2>匿名使用统计</h2>
-				<p>
+
+				<h2 data-i18n="privacy.telemetry.heading">匿名使用统计</h2>
+				<p data-i18n="privacy.telemetry.summary">
 					匿名使用统计默认开启，可在扩展设置页关闭。统计用于了解活跃安装量、版本分布和核心功能入口使用情况。
 				</p>
-				<p>会发送的信息：</p>
-				<ul class="install-list">
-					<li><strong>匿名安装 ID</strong><span>随机生成，仅用于区分安装，不包含账号或设备身份；服务端只保存不可逆哈希用于去重统计。</span></li>
-					<li><strong>扩展版本</strong><span>例如 0.2.4，用于判断版本分布。</span></li>
-					<li><strong>事件类型</strong><span>install、update、daily_active、viewer_open、toolkit_open。</span></li>
-					<li><strong>粗粒度环境</strong><span>扩展语言、浏览器大类、操作系统大类。</span></li>
-					<li><strong>粗粒度来源</strong><span>Cloudflare 提供的国家/地区码；不保存 IP、URL、域名或 referrer。</span></li>
-					<li><strong>日期</strong><span>按 UTC 日期聚合，客户端会限频发送。</span></li>
+				<p data-i18n="privacy.sent.heading">会发送的信息：</p>
+				<ul class="privacy-list">
+					<li>
+						<strong data-i18n="privacy.sent.installId.title">匿名安装 ID</strong>
+						<span data-i18n="privacy.sent.installId.description">随机生成，仅用于区分安装，不包含账号或设备身份；服务端只保存不可逆哈希用于去重统计。</span>
+					</li>
+					<li>
+						<strong data-i18n="privacy.sent.version.title">扩展版本</strong>
+						<span data-i18n="privacy.sent.version.description">例如 0.3.1，用于判断版本分布。</span>
+					</li>
+					<li>
+						<strong data-i18n="privacy.sent.event.title">事件类型</strong>
+						<span data-i18n="privacy.sent.event.description">install、update、daily_active、viewer_open、toolkit_open。</span>
+					</li>
+					<li>
+						<strong data-i18n="privacy.sent.environment.title">粗粒度环境</strong>
+						<span data-i18n="privacy.sent.environment.description">扩展语言、浏览器大类、操作系统大类。</span>
+					</li>
+					<li>
+						<strong data-i18n="privacy.sent.country.title">粗粒度来源</strong>
+						<span data-i18n="privacy.sent.country.description">Cloudflare 提供的国家/地区码；不保存 IP、URL、域名或 referrer。</span>
+					</li>
+					<li>
+						<strong data-i18n="privacy.sent.date.title">日期</strong>
+						<span data-i18n="privacy.sent.date.description">按 UTC 日期聚合，客户端会限频发送。</span>
+					</li>
 				</ul>
-				<p>不会发送的信息：</p>
-				<ul class="install-list">
-					<li><strong>JSON 内容</strong><span>不会上传页面 JSON、API 响应体或用户粘贴文本。</span></li>
-					<li><strong>页面信息</strong><span>不会上传页面 URL、域名、路径或查询参数。</span></li>
-					<li><strong>操作内容</strong><span>不会上传 JSON path、搜索词、转换输入或转换输出。</span></li>
+
+				<p data-i18n="privacy.notSent.heading">不会发送的信息：</p>
+				<ul class="privacy-list">
+					<li>
+						<strong data-i18n="privacy.notSent.content.title">JSON 内容</strong>
+						<span data-i18n="privacy.notSent.content.description">不会上传页面 JSON、API 响应体或用户粘贴文本。</span>
+					</li>
+					<li>
+						<strong data-i18n="privacy.notSent.page.title">页面信息</strong>
+						<span data-i18n="privacy.notSent.page.description">不会上传页面 URL、域名、路径或查询参数。</span>
+					</li>
+					<li>
+						<strong data-i18n="privacy.notSent.actions.title">操作内容</strong>
+						<span data-i18n="privacy.notSent.actions.description">不会上传 JSON path、搜索词、转换输入或转换输出。</span>
+					</li>
 				</ul>
-				<h2>关闭方式</h2>
-				<p>
-					打开 JSON Mate 设置页，关闭 “Share anonymous usage statistics / 发送匿名使用统计”。关闭后扩展不会继续发送遥测请求，并会清理本地遥测 ID 与发送记录。
+
+				<h2 data-i18n="privacy.optOut.heading">关闭方式</h2>
+				<p data-i18n="privacy.optOut.summary">
+					打开 JSON Mate 设置页，关闭“发送匿名使用统计”。关闭后扩展不会继续发送遥测请求，并会清理本地遥测 ID 与发送记录。
 				</p>
-				<h2>Chrome Web Store User Data Policy</h2>
-				<p>
-					The use of information received from Google APIs will adhere to the Chrome Web Store User Data Policy, including the Limited Use requirements.
+
+				<h2 data-i18n="privacy.chrome.heading">Chrome Web Store 用户数据政策</h2>
+				<p data-i18n="privacy.chrome.summary">
+					通过 Google API 获得的信息会遵守 Chrome Web Store 用户数据政策，包括 Limited Use 要求。
 				</p>
-				<h2>反馈</h2>
+
+				<h2 data-i18n="privacy.feedback.heading">反馈</h2>
 				<p>
-					反馈问题请使用 <a href="https://github.com/etng/crxJsonMate/issues/new/choose">GitHub Issues</a>。提交问题时请先脱敏示例数据。
+					<span data-i18n="privacy.feedback.prefix">反馈问题请使用</span>
+					<a href="https://github.com/etng/crxJsonMate/issues/new/choose">GitHub Issues</a>
+					<span data-i18n="privacy.feedback.suffix">。提交问题时请先脱敏示例数据。</span>
 				</p>
-			</section>
+			</article>
 		</main>
+
+		<footer class="site-footer">
+			<div>
+				<strong>JSON Mate</strong>
+				<span data-i18n="footer.tagline">开源 JSON 浏览器扩展。</span>
+			</div>
+			<nav aria-label="页脚" data-i18n-attr="aria-label:footer.label">
+				<a href="privacy.html" data-i18n="footer.privacy">隐私</a>
+				<a href="https://github.com/etng/crxJsonMate/issues/new/choose" data-i18n="footer.issues">问题反馈</a>
+				<a href="https://github.com/etng/crxJsonMate/releases" data-i18n="footer.releases">版本记录</a>
+			</nav>
+		</footer>
+		<script src="i18n.js"></script>
 	</body>
 </html>
