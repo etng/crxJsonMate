@@ -81,7 +81,7 @@ JSON Mate 是一个面向真实调试场景的 JSON 浏览器扩展。它把 JSO
 ## 版本与发布
 
 - 扩展版本使用严格 `x.y.z` 的 SemVer 形式
-- 发布包文件名与 `package.json` 版本保持一致，例如 `json-mate-v0.3.1.zip`
+- 发布包文件名与 `package.json` 版本保持一致，例如 `json-mate-v0.4.0.zip`
 - GitHub Release workflow 以 `vX.Y.Z` tag 为发布触发源
 - Cloudflare 托管站点用于展示功能、安装方式和下载入口
 
