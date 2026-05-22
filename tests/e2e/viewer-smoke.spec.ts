@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 const EXTENSION_PATH = path.resolve('.output/wxt/chrome-mv3');
 const TOOLS_FIXTURE_URL = 'http://127.0.0.1:4311/fixtures/sample-tools.json';
 const OBJECT_FIXTURE_URL = 'http://127.0.0.1:4311/fixtures/sample-object.json';
+const SANDBOX_FIXTURE_URL = 'http://127.0.0.1:4311/fixtures/sample-sandbox.txt';
 const TOOLS_HOMEPAGE_URL = 'https://noiseprotocol.org/noise.html?chapter=handshake-patterns&section=one-way&example=noise-nn&lang=en&view=full';
 
 let context: BrowserContext;
@@ -51,6 +52,19 @@ test.beforeEach(async () => {
 test.afterEach(async () => {
   await context.close();
   rmSync(userDataDir, { force: true, recursive: true });
+});
+
+test('falls back to top-level viewer when host CSP sandboxes the iframe', async () => {
+  const page = await context.newPage();
+  await page.goto(SANDBOX_FIXTURE_URL, { waitUntil: 'domcontentloaded' });
+
+  await expect(page).toHaveURL(/chrome-extension:\/\/.*\/viewer\.html\?.*sourceUrl=/, { timeout: 10000 });
+  await expect(page.locator('.jmTreeCard')).toBeVisible();
+  await expect(page.locator('#root')).toContainText('sandbox');
+  await expect(page.locator('#root')).toContainText('raw-text-json');
+  await expect(page.locator('.json-mate-loading-tip')).toHaveCount(0);
+
+  await page.close();
 });
 
 test('keeps semantic links usable while preserving image previews', async () => {

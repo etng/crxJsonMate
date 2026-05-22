@@ -1,0 +1,10 @@
+{
+  "sandbox": true,
+  "source": "csp-fixture",
+  "items": [
+    {
+      "id": 1,
+      "name": "raw-text-json"
+    }
+  ]
+}

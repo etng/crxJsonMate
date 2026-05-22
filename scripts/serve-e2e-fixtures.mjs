@@ -46,6 +46,15 @@ const sendNotFound = (response) => {
   response.end('Not found');
 };
 
+const applyFixtureHeaders = (response, filePath) => {
+  if (path.basename(filePath) !== 'sample-sandbox.txt') {
+    return;
+  }
+
+  response.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; sandbox");
+  response.setHeader('X-Content-Type-Options', 'nosniff');
+};
+
 const sendFile = async (response, filePath) => {
   const fileStat = await stat(filePath);
   if (!fileStat.isFile()) {
@@ -56,6 +65,7 @@ const sendFile = async (response, filePath) => {
   response.statusCode = 200;
   response.setHeader('Content-Type', contentType);
   response.setHeader('Content-Length', fileStat.size);
+  applyFixtureHeaders(response, filePath);
   createReadStream(filePath).pipe(response);
   return true;
 };

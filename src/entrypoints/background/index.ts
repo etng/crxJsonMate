@@ -122,6 +122,19 @@ const openViewerPage = async (params?: Record<string, string | null | undefined>
   });
 };
 
+const openViewerInCurrentTab = async (
+  tabId: number | undefined,
+  params?: Record<string, string | null | undefined>
+) => {
+  const url = getViewerUrl(params);
+  if (!tabId) {
+    await browser.tabs.create({ url, active: true });
+    return;
+  }
+
+  await browser.tabs.update(tabId, { url, active: true });
+};
+
 const openViewer = async (params?: Record<string, string | null | undefined>) => {
   const settings = await loadSettings();
   if (settings.openViewerMode === 'tab') {
@@ -256,7 +269,7 @@ export default defineBackground(() => {
     ignoreAsyncError(handleContextMenuClick(info, tab));
   });
 
-  browser.runtime.onMessage.addListener(async (request: JsonMateRuntimeMessage) => {
+  browser.runtime.onMessage.addListener(async (request: JsonMateRuntimeMessage, sender) => {
     switch (request.cmd) {
       case 'getPendingJson':
         return await consumePendingViewerJson();
@@ -276,6 +289,9 @@ export default defineBackground(() => {
         return {};
       case 'openViewerPage':
         await openViewerPage();
+        return {};
+      case 'openViewerInCurrentTab':
+        await openViewerInCurrentTab(sender.tab?.id, { sourceUrl: request.sourceUrl || null });
         return {};
       case 'openBrowserTab':
         await browser.tabs.create({

@@ -278,11 +278,35 @@ export default defineContentScript({
       const frame = document.createElement('iframe');
       const extensionOrigin = browser.runtime.getURL('').slice(0, -1);
       const payloadRetryTimers: number[] = [];
+      let viewerBooted = false;
+      let fallbackStarted = false;
       const postPayloadToFrame = () => {
         frame.contentWindow?.postMessage({
           cmd: 'postJson',
           json: payload
         }, '*');
+      };
+      const openTopLevelViewerFallback = async () => {
+        if (fallbackStarted) {
+          return;
+        }
+
+        fallbackStarted = true;
+        tip.textContent = 'Opening JSON Mate in a tab...';
+
+        try {
+          await browser.runtime.sendMessage({
+            cmd: 'setPendingJson',
+            data: payload.string
+          } as const);
+          await browser.runtime.sendMessage({
+            cmd: 'openViewerInCurrentTab',
+            sourceUrl: window.location.href
+          } as const);
+        } catch {
+          inPageViewerRendered = false;
+          tip.textContent = 'JSON Mate could not open this page.';
+        }
       };
       const queuePayloadRetries = () => {
         for (const delayMs of [0, 120, 360, 900, 1800]) {
@@ -302,6 +326,7 @@ export default defineContentScript({
         }
 
         if (event.data?.cmd === 'viewerLoadedOk') {
+          viewerBooted = true;
           hideLoadingTip();
           postPayloadToFrame();
           return;
@@ -320,6 +345,15 @@ export default defineContentScript({
       };
 
       window.addEventListener('message', handleViewerMessage);
+      payloadRetryTimers.push(window.setTimeout(() => {
+        if (viewerBooted) {
+          return;
+        }
+
+        cleanupViewerMessage();
+        frame.remove();
+        void openTopLevelViewerFallback();
+      }, 4000));
       payloadRetryTimers.push(window.setTimeout(cleanupViewerMessage, 10000));
       frame.addEventListener('load', queuePayloadRetries, { once: true });
       frame.src = getViewerUrl();

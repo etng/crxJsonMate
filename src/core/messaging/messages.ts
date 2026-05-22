@@ -15,6 +15,11 @@ export interface OpenViewerPageMessage {
   cmd: 'openViewerPage';
 }
 
+export interface OpenViewerInCurrentTabMessage {
+  cmd: 'openViewerInCurrentTab';
+  sourceUrl?: string | null;
+}
+
 export interface OpenBrowserTabMessage {
   cmd: 'openBrowserTab';
   data: string;
@@ -76,6 +81,7 @@ export type JsonMateRuntimeMessage =
   | SetPendingJsonMessage
   | OpenWorkspaceLauncherMessage
   | OpenViewerPageMessage
+  | OpenViewerInCurrentTabMessage
   | OpenBrowserTabMessage
   | GetPendingJsonMessage
   | PeekPendingJsonMessage
