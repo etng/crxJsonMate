@@ -110,6 +110,11 @@ test('falls back to top-level viewer when host CSP sandboxes the iframe', async 
   await expect(page.locator('.json-mate-loading-tip')).toHaveCount(0);
   expect(consoleMessages.filter((message) => message.includes('Blocked script execution'))).toEqual([]);
 
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#dataExplorer')).toBeVisible();
+  await expect(page.locator('#root')).toContainText('sandbox');
+  await expect(page.locator('#root')).toContainText('raw-text-json');
+
   await page.close();
 });
 

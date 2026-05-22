@@ -1376,6 +1376,21 @@ export function App() {
         }
       }
 
+      if (!hasLoadedPendingPayload && isTopLevelFallbackMode && detachedSourceUrl) {
+        const sourceRawText = await sendRuntimeMessage<string>({
+          cmd: 'fetchSourceRawText',
+          url: detachedSourceUrl
+        });
+        if (typeof sourceRawText === 'string' && sourceRawText) {
+          const parsed = parseViewerInput(sourceRawText, loadedSettings.jsonEngine, 'pending');
+          if (parsed) {
+            applyViewerState(parsed, sourceRawText);
+            setStatusText(messages.statusReady);
+            hasLoadedPendingPayload = true;
+          }
+        }
+      }
+
       if (!hasLoadedPendingPayload && isLauncherMode) {
         const pendingInputValue = await sendRuntimeMessage<string>({ cmd: 'getPendingInput' });
         if (typeof pendingInputValue === 'string' && pendingInputValue) {
