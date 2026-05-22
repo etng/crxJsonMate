@@ -54,6 +54,41 @@ test.afterEach(async () => {
   rmSync(userDataDir, { force: true, recursive: true });
 });
 
+test('exposes branded favicon PNGs on the top-level viewer page', async () => {
+  const { page } = await openFixtureViewer();
+  const iframeSrc = await page.locator('iframe[src^="chrome-extension://"]').getAttribute('src');
+  if (!iframeSrc) {
+    throw new Error('viewer iframe src not found');
+  }
+
+  const extensionUrl = new URL(iframeSrc);
+  const extensionOrigin = `${extensionUrl.protocol}//${extensionUrl.host}`;
+  await page.goto(`${extensionOrigin}/viewer.html?launcher=1`, { waitUntil: 'domcontentloaded' });
+
+  const iconLinks = await page.locator('link[rel~="icon"]').evaluateAll((links) => (
+    links.map((link) => ({
+      href: (link as HTMLLinkElement).href,
+      sizes: (link as HTMLLinkElement).sizes.value,
+      type: (link as HTMLLinkElement).type
+    }))
+  ));
+
+  expect(iconLinks).toEqual(expect.arrayContaining([
+    {
+      href: `${extensionOrigin}/icons/json-mate-32.png`,
+      sizes: '32x32',
+      type: 'image/png'
+    },
+    {
+      href: `${extensionOrigin}/icons/json-mate-16.png`,
+      sizes: '16x16',
+      type: 'image/png'
+    }
+  ]));
+
+  await page.close();
+});
+
 test('falls back to top-level viewer when host CSP sandboxes the iframe', async () => {
   const page = await context.newPage();
   const consoleMessages: string[] = [];
