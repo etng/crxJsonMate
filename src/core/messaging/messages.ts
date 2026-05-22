@@ -17,6 +17,7 @@ export interface OpenViewerPageMessage {
 
 export interface OpenViewerInCurrentTabMessage {
   cmd: 'openViewerInCurrentTab';
+  mode?: 'workspace' | null;
   sourceUrl?: string | null;
 }
 

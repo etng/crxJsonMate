@@ -62,6 +62,7 @@ import './style.css';
 
 const queryParams = new URLSearchParams(window.location.search);
 const initialIframeMode = queryParams.get('type') === 'iframe' || queryParams.get('embedded') === '1';
+const initialTopLevelFallbackMode = queryParams.get('fallback') === 'top-level' && window.parent === window;
 const rootPathKey = getViewerPathKey([]);
 const modernSearchHistoryStorageKey = 'jsonMate.modernViewerSearchHistory.v1';
 const modernSearchModeStorageKey = 'jsonMate.modernViewerSearchMode.v1';
@@ -1133,6 +1134,7 @@ export function App() {
   const detachedSourcePathLabel = decodeDetachedViewerSourcePath();
   const detachedSourceUrl = decodeDetachedViewerSourceUrl();
   const isLauncherMode = queryParams.get(launcherViewerQueryKey) === '1';
+  const isTopLevelFallbackMode = initialTopLevelFallbackMode;
   const currentSourceUrl = detachedSourceUrl || (isIframeMode ? document.referrer : '');
   const canRenameKey = viewerState && hasSelection ? canRenameKeyAtPath(viewerState.payload.data, selectedPath) : false;
   const currentKeyValue = selectedPath.length > 0 ? String(selectedPath[selectedPath.length - 1]!) : '';
@@ -1363,7 +1365,7 @@ export function App() {
       }
 
       const pendingValue = await sendRuntimeMessage<string>(
-        { cmd: iframeMode && !isLauncherMode ? 'peekPendingJson' : 'getPendingJson' }
+        { cmd: iframeMode && !isLauncherMode && !isTopLevelFallbackMode ? 'peekPendingJson' : 'getPendingJson' }
       );
       if (!hasLoadedPendingPayload && typeof pendingValue === 'string' && pendingValue) {
         const parsed = parseViewerInput(pendingValue, loadedSettings.jsonEngine, 'pending');

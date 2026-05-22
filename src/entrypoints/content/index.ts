@@ -301,6 +301,7 @@ export default defineContentScript({
           } as const);
           await browser.runtime.sendMessage({
             cmd: 'openViewerInCurrentTab',
+            mode: 'workspace',
             sourceUrl: window.location.href
           } as const);
         } catch {

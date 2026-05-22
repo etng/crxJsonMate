@@ -59,7 +59,11 @@ test('falls back to top-level viewer when host CSP sandboxes the iframe', async 
   await page.goto(SANDBOX_FIXTURE_URL, { waitUntil: 'domcontentloaded' });
 
   await expect(page).toHaveURL(/chrome-extension:\/\/.*\/viewer\.html\?.*sourceUrl=/, { timeout: 10000 });
-  await expect(page.locator('.jmTreeCard')).toBeVisible();
+  const fallbackUrl = new URL(page.url());
+  expect(fallbackUrl.searchParams.get('type')).toBe('iframe');
+  expect(fallbackUrl.searchParams.get('fallback')).toBe('top-level');
+  await expect(page.locator('#dataExplorer')).toBeVisible();
+  await expect(page.locator('.jmTreeCard')).toHaveCount(0);
   await expect(page.locator('#root')).toContainText('sandbox');
   await expect(page.locator('#root')).toContainText('raw-text-json');
   await expect(page.locator('.json-mate-loading-tip')).toHaveCount(0);

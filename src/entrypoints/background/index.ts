@@ -291,7 +291,10 @@ export default defineBackground(() => {
         await openViewerPage();
         return {};
       case 'openViewerInCurrentTab':
-        await openViewerInCurrentTab(sender.tab?.id, { sourceUrl: request.sourceUrl || null });
+        await openViewerInCurrentTab(sender.tab?.id, {
+          ...(request.mode === 'workspace' ? { type: 'iframe', fallback: 'top-level' } : {}),
+          sourceUrl: request.sourceUrl || null
+        });
         return {};
       case 'openBrowserTab':
         await browser.tabs.create({
