@@ -280,6 +280,15 @@ export default defineContentScript({
       return viewerUrl.toString();
     };
 
+    const waitForSandboxProbe = async (task: Promise<boolean>, timeoutMs = 300) => (
+      await Promise.race([
+        task,
+        new Promise<boolean>((resolve) => {
+          window.setTimeout(() => resolve(false), timeoutMs);
+        })
+      ])
+    );
+
     const renderInPageViewer = (payload: RawPayloadResult | null) => {
       if (!payload || inPageViewerRendered || !document.body) {
         return;
@@ -287,18 +296,8 @@ export default defineContentScript({
 
       inPageViewerRendered = true;
       const tip = ensureLoadingTip();
-      const frame = document.createElement('iframe');
       const extensionOrigin = browser.runtime.getURL('').slice(0, -1);
-      const payloadRetryTimers: number[] = [];
-      let viewerBooted = false;
       let fallbackStarted = false;
-      let cleanupViewerMessage: () => void = () => {};
-      const postPayloadToFrame = () => {
-        frame.contentWindow?.postMessage({
-          cmd: 'postJson',
-          json: payload
-        }, '*');
-      };
       const openTopLevelViewerFallback = async () => {
         if (fallbackStarted) {
           return;
@@ -322,79 +321,102 @@ export default defineContentScript({
           tip.textContent = 'JSON Mate could not open this page.';
         }
       };
-      const runTopLevelViewerFallback = () => {
-        if (viewerBooted || fallbackStarted) {
-          return;
-        }
 
-        cleanupViewerMessage();
-        frame.remove();
-        void openTopLevelViewerFallback();
-      };
-      const queuePayloadRetries = () => {
-        for (const delayMs of [0, 120, 360, 900, 1800]) {
-          payloadRetryTimers.push(window.setTimeout(postPayloadToFrame, delayMs));
-        }
-        payloadRetryTimers.push(window.setTimeout(runTopLevelViewerFallback, 800));
-      };
-      cleanupViewerMessage = () => {
-        window.removeEventListener('message', handleViewerMessage);
-        for (const timerId of payloadRetryTimers) {
-          window.clearTimeout(timerId);
-        }
-      };
+      const startIframeViewer = (sandboxProbeTask: Promise<boolean>) => {
+        const frame = document.createElement('iframe');
+        const payloadRetryTimers: number[] = [];
+        let viewerBooted = false;
+        let cleanupViewerMessage: () => void = () => {};
+        const postPayloadToFrame = () => {
+          frame.contentWindow?.postMessage({
+            cmd: 'postJson',
+            json: payload
+          }, '*');
+        };
+        const runTopLevelViewerFallback = () => {
+          if (viewerBooted || fallbackStarted) {
+            return;
+          }
 
-      const handleViewerMessage = (event: MessageEvent) => {
-        if (event.origin !== extensionOrigin) {
-          return;
-        }
-
-        if (event.data?.cmd === 'viewerLoadedOk') {
-          viewerBooted = true;
-          hideLoadingTip();
-          postPayloadToFrame();
-          return;
-        }
-
-        if (event.data?.cmd === 'viewerPayloadLoaded') {
-          hideLoadingTip();
           cleanupViewerMessage();
-          return;
-        }
+          frame.remove();
+          void openTopLevelViewerFallback();
+        };
+        const queuePayloadRetries = () => {
+          for (const delayMs of [0, 120, 360, 900, 1800]) {
+            payloadRetryTimers.push(window.setTimeout(postPayloadToFrame, delayMs));
+          }
+          payloadRetryTimers.push(window.setTimeout(runTopLevelViewerFallback, 800));
+        };
+        cleanupViewerMessage = () => {
+          window.removeEventListener('message', handleViewerMessage);
+          for (const timerId of payloadRetryTimers) {
+            window.clearTimeout(timerId);
+          }
+        };
 
-        if (event.data?.cmd === 'viewerLoadedError') {
-          tip.textContent = `JSON Mate error: ${String(event.data.msg || 'Unknown error')}`;
-          cleanupViewerMessage();
-        }
-      };
+        const handleViewerMessage = (event: MessageEvent) => {
+          if (event.origin !== extensionOrigin) {
+            return;
+          }
 
-      window.addEventListener('message', handleViewerMessage);
-      void probeSourceSecurityHeaders().then((sandboxed) => {
-        if (sandboxed) {
+          if (event.data?.cmd === 'viewerLoadedOk') {
+            viewerBooted = true;
+            hideLoadingTip();
+            postPayloadToFrame();
+            return;
+          }
+
+          if (event.data?.cmd === 'viewerPayloadLoaded') {
+            hideLoadingTip();
+            cleanupViewerMessage();
+            return;
+          }
+
+          if (event.data?.cmd === 'viewerLoadedError') {
+            tip.textContent = `JSON Mate error: ${String(event.data.msg || 'Unknown error')}`;
+            cleanupViewerMessage();
+          }
+        };
+
+        window.addEventListener('message', handleViewerMessage);
+        void sandboxProbeTask.then((sandboxed) => {
+          if (sandboxed) {
+            runTopLevelViewerFallback();
+          }
+        });
+        payloadRetryTimers.push(window.setTimeout(() => {
           runTopLevelViewerFallback();
-        }
-      });
-      payloadRetryTimers.push(window.setTimeout(() => {
-        runTopLevelViewerFallback();
-      }, 4000));
-      payloadRetryTimers.push(window.setTimeout(cleanupViewerMessage, 10000));
-      frame.addEventListener('load', queuePayloadRetries, { once: true });
-      frame.src = getViewerUrl();
-      frame.style.cssText = [
-        'position:fixed',
-        'inset:0',
-        'width:100%',
-        'height:100%',
-        'border:0',
-        'background:#fff',
-        'z-index:2147483646'
-      ].join(';');
+        }, 4000));
+        payloadRetryTimers.push(window.setTimeout(cleanupViewerMessage, 10000));
+        frame.addEventListener('load', queuePayloadRetries, { once: true });
+        frame.src = getViewerUrl();
+        frame.style.cssText = [
+          'position:fixed',
+          'inset:0',
+          'width:100%',
+          'height:100%',
+          'border:0',
+          'background:#fff',
+          'z-index:2147483646'
+        ].join(';');
 
-      document.documentElement.style.height = '100%';
-      document.body.style.margin = '0';
-      document.body.style.minHeight = '100%';
-      document.body.style.background = '#fff';
-      document.body.appendChild(frame);
+        document.documentElement.style.height = '100%';
+        document.body.style.margin = '0';
+        document.body.style.minHeight = '100%';
+        document.body.style.background = '#fff';
+        document.body.appendChild(frame);
+      };
+
+      const sandboxProbeTask = probeSourceSecurityHeaders();
+      void waitForSandboxProbe(sandboxProbeTask).then((sandboxed) => {
+        if (sandboxed) {
+          void openTopLevelViewerFallback();
+          return;
+        }
+
+        startIframeViewer(sandboxProbeTask);
+      });
     };
 
     const createView = () => {

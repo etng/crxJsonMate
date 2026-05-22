@@ -56,6 +56,10 @@ test.afterEach(async () => {
 
 test('falls back to top-level viewer when host CSP sandboxes the iframe', async () => {
   const page = await context.newPage();
+  const consoleMessages: string[] = [];
+  page.on('console', (message) => {
+    consoleMessages.push(message.text());
+  });
   const startedAt = Date.now();
   await page.goto(SANDBOX_FIXTURE_URL, { waitUntil: 'domcontentloaded' });
 
@@ -69,6 +73,7 @@ test('falls back to top-level viewer when host CSP sandboxes the iframe', async 
   await expect(page.locator('#root')).toContainText('sandbox');
   await expect(page.locator('#root')).toContainText('raw-text-json');
   await expect(page.locator('.json-mate-loading-tip')).toHaveCount(0);
+  expect(consoleMessages.filter((message) => message.includes('Blocked script execution'))).toEqual([]);
 
   await page.close();
 });
