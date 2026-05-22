@@ -142,6 +142,18 @@ export default defineContentScript({
       } as const);
     };
 
+    const probeSourceSecurityHeaders = async () => {
+      try {
+        const result = await browser.runtime.sendMessage({
+          cmd: 'probeSourceSecurityHeaders',
+          url: window.location.href
+        } as const);
+        return Boolean((result as { sandboxed?: boolean } | null)?.sandboxed);
+      } catch {
+        return false;
+      }
+    };
+
     const ensureRecoveryBanner = () => {
       if (recoveryBannerShown || inPageViewerRendered || !detectedPayload || !document.body) {
         return;
@@ -280,6 +292,7 @@ export default defineContentScript({
       const payloadRetryTimers: number[] = [];
       let viewerBooted = false;
       let fallbackStarted = false;
+      let cleanupViewerMessage: () => void = () => {};
       const postPayloadToFrame = () => {
         frame.contentWindow?.postMessage({
           cmd: 'postJson',
@@ -309,12 +322,22 @@ export default defineContentScript({
           tip.textContent = 'JSON Mate could not open this page.';
         }
       };
+      const runTopLevelViewerFallback = () => {
+        if (viewerBooted || fallbackStarted) {
+          return;
+        }
+
+        cleanupViewerMessage();
+        frame.remove();
+        void openTopLevelViewerFallback();
+      };
       const queuePayloadRetries = () => {
         for (const delayMs of [0, 120, 360, 900, 1800]) {
           payloadRetryTimers.push(window.setTimeout(postPayloadToFrame, delayMs));
         }
+        payloadRetryTimers.push(window.setTimeout(runTopLevelViewerFallback, 800));
       };
-      const cleanupViewerMessage = () => {
+      cleanupViewerMessage = () => {
         window.removeEventListener('message', handleViewerMessage);
         for (const timerId of payloadRetryTimers) {
           window.clearTimeout(timerId);
@@ -346,14 +369,13 @@ export default defineContentScript({
       };
 
       window.addEventListener('message', handleViewerMessage);
-      payloadRetryTimers.push(window.setTimeout(() => {
-        if (viewerBooted) {
-          return;
+      void probeSourceSecurityHeaders().then((sandboxed) => {
+        if (sandboxed) {
+          runTopLevelViewerFallback();
         }
-
-        cleanupViewerMessage();
-        frame.remove();
-        void openTopLevelViewerFallback();
+      });
+      payloadRetryTimers.push(window.setTimeout(() => {
+        runTopLevelViewerFallback();
       }, 4000));
       payloadRetryTimers.push(window.setTimeout(cleanupViewerMessage, 10000));
       frame.addEventListener('load', queuePayloadRetries, { once: true });

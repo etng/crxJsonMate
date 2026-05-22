@@ -56,9 +56,11 @@ test.afterEach(async () => {
 
 test('falls back to top-level viewer when host CSP sandboxes the iframe', async () => {
   const page = await context.newPage();
+  const startedAt = Date.now();
   await page.goto(SANDBOX_FIXTURE_URL, { waitUntil: 'domcontentloaded' });
 
   await expect(page).toHaveURL(/chrome-extension:\/\/.*\/viewer\.html\?.*sourceUrl=/, { timeout: 10000 });
+  expect(Date.now() - startedAt).toBeLessThan(3000);
   const fallbackUrl = new URL(page.url());
   expect(fallbackUrl.searchParams.get('type')).toBe('iframe');
   expect(fallbackUrl.searchParams.get('fallback')).toBe('top-level');

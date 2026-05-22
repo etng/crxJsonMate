@@ -60,6 +60,11 @@ export interface FetchSourceRawTextMessage {
   url: string;
 }
 
+export interface ProbeSourceSecurityHeadersMessage {
+  cmd: 'probeSourceSecurityHeaders';
+  url: string;
+}
+
 export interface GetSelectionTextMessage {
   cmd: 'getSelectionText';
 }
@@ -92,6 +97,7 @@ export type JsonMateRuntimeMessage =
   | RunViewerInPageMessage
   | GetDetectedJsonTextMessage
   | FetchSourceRawTextMessage
+  | ProbeSourceSecurityHeadersMessage
   | GetSelectionTextMessage
   | SaveSettingsMessage
   | LoadSettingsMessage

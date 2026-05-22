@@ -171,6 +171,31 @@ const fetchSourceRawText = async (url: string) => {
   }
 };
 
+const hasSandboxCspDirective = (contentSecurityPolicy: string | null) => (
+  /(?:^|;)\s*sandbox(?:[\s;]|$)/i.test(contentSecurityPolicy || '')
+);
+
+const probeSourceSecurityHeaders = async (url: string) => {
+  try {
+    const response = await fetch(url, {
+      method: 'HEAD',
+      credentials: 'include',
+      cache: 'no-store',
+      redirect: 'follow'
+    });
+    const contentSecurityPolicy = response.headers.get('content-security-policy');
+    return {
+      contentSecurityPolicy,
+      sandboxed: hasSandboxCspDirective(contentSecurityPolicy)
+    };
+  } catch {
+    return {
+      contentSecurityPolicy: null,
+      sandboxed: false
+    };
+  }
+};
+
 const sendMessageToTab = async (tabId: number | undefined, payload: JsonMateRuntimeMessage) => {
   if (!tabId) {
     return null;
@@ -280,6 +305,8 @@ export default defineBackground(() => {
         return {};
       case 'fetchSourceRawText':
         return await fetchSourceRawText(request.url);
+      case 'probeSourceSecurityHeaders':
+        return await probeSourceSecurityHeaders(request.url);
       case 'getPendingInput':
         return await consumePendingViewerInput();
       case 'peekPendingInput':
