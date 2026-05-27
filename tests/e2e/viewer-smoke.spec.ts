@@ -7,6 +7,7 @@ const EXTENSION_PATH = path.resolve('.output/wxt/chrome-mv3');
 const TOOLS_FIXTURE_URL = 'http://127.0.0.1:4311/fixtures/sample-tools.json';
 const OBJECT_FIXTURE_URL = 'http://127.0.0.1:4311/fixtures/sample-object.json';
 const SANDBOX_FIXTURE_URL = 'http://127.0.0.1:4311/fixtures/sample-sandbox.txt';
+const SELECTION_FIXTURE_URL = 'http://127.0.0.1:4311/fixtures/selection.html';
 const TOOLS_HOMEPAGE_URL = 'https://noiseprotocol.org/noise.html?chapter=handshake-patterns&section=one-way&example=noise-nn&lang=en&view=full';
 
 let context: BrowserContext;
@@ -442,6 +443,40 @@ test('keeps the inspector value editor editable while a node is selected', async
   await textarea.fill('changed value');
   await expect(textarea).toHaveValue('changed value');
 
+  await page.close();
+});
+
+test('opens selected JM-JSON text from the extension action', async () => {
+  const page = await context.newPage();
+  await page.goto(SELECTION_FIXTURE_URL, { waitUntil: 'domcontentloaded' });
+  await page.locator('#payload').evaluate((element) => {
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  });
+
+  let serviceWorker = context.serviceWorkers()[0];
+  if (!serviceWorker) {
+    serviceWorker = await context.waitForEvent('serviceworker');
+  }
+
+  const viewerPagePromise = context.waitForEvent('page');
+  await serviceWorker.evaluate(async () => {
+    const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    await chrome.action.onClicked.dispatch(tab);
+  });
+
+  const viewerPage = await viewerPagePromise;
+  await viewerPage.waitForLoadState('domcontentloaded');
+  await expect(viewerPage).toHaveURL(/viewer\.html\?.*launcher=1/);
+  await expect(viewerPage.locator('#dataExplorer')).toBeVisible({ timeout: 10000 });
+  await expect(viewerPage.locator('#root')).toContainText('root');
+  await expect(viewerPage.locator('#root')).toContainText('items');
+  await expect(viewerPage.locator('#editorValue')).toHaveValue(/"root": "ok"/);
+
+  await viewerPage.close();
   await page.close();
 });
 

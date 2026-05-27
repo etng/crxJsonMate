@@ -1,11 +1,11 @@
 import { browser } from '#imports';
-import { parseRawPayload } from '@/core/detector/raw-payload';
 import { loadSettings, saveSettings } from '@/core/settings/storage';
 import {
   clearTelemetryLocalState,
   trackTelemetryEvent
 } from '@/core/telemetry/client';
 import type { JsonMateRuntimeMessage } from '@/core/messaging/messages';
+import { resolveViewerActionSelectionPayload } from '@/core/viewer/action-selection';
 
 const CONTEXT_MENU_IDS = [
   { id: 'json-mate-context-menu-page', contexts: ['page'], title: 'JSON Mate (page)' },
@@ -210,16 +210,15 @@ const sendMessageToTab = async (tabId: number | undefined, payload: JsonMateRunt
 
 const handleActionClick = async (tab: RuntimeTabRef) => {
   const selectionText = await sendMessageToTab(tab.id, { cmd: 'getSelectionText' });
-  const normalizedSelectionText = typeof selectionText === 'string'
-    ? selectionText.trim()
-    : '';
-  const selectedPayload = normalizedSelectionText
-    ? parseRawPayload(normalizedSelectionText)
-    : null;
+  const settings = await loadSettings();
+  const selectedPayload = resolveViewerActionSelectionPayload(
+    typeof selectionText === 'string' ? selectionText : null,
+    settings.jsonEngine
+  );
 
-  await setPendingViewerJson(selectedPayload?.string || null);
-  await setPendingViewerInput(!selectedPayload && normalizedSelectionText ? normalizedSelectionText : null);
-  await openWorkspaceLauncher(selectedPayload ? { sourceUrl: tab.url || null } : undefined);
+  await setPendingViewerJson(selectedPayload.jsonText);
+  await setPendingViewerInput(selectedPayload.inputText);
+  await openWorkspaceLauncher(selectedPayload.jsonText ? { sourceUrl: tab.url || null } : undefined);
 };
 
 const createContextMenuItem = async (item: typeof CONTEXT_MENU_IDS[number]) => {

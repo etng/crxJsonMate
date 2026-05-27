@@ -22,7 +22,7 @@ export interface EmbeddedViewerMessage {
 
 const json5Api: JsonLikeApi = {
   parse: (text) => JSON5.parse(text),
-  stringify: (value, replacer, space) => JSON5.stringify(value, replacer as never, space) || ''
+  stringify: (value, replacer, space) => JSON.stringify(value, replacer as never, space) || ''
 };
 
 const countNodes = (value: unknown): number => {

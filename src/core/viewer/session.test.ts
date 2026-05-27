@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseViewerInput, resolveEmbeddedPayload } from './session';
+import { formatViewerEditorValue, parseViewerInput, resolveEmbeddedPayload } from './session';
 
 describe('viewer session parsing', () => {
   it('builds a viewer state from pending strict JSON', () => {
@@ -25,6 +25,14 @@ describe('viewer session parsing', () => {
         data: { root: 'ok' }
       }
     });
+  });
+
+  it('serializes JM-JSON parsed values as strict JSON for editor and copy output', () => {
+    const result = parseViewerInput("{root:'ok'}", 'JM-JSON', 'manual');
+
+    expect(result?.prettyText).toContain('"root": "ok"');
+    expect(result?.prettyText).not.toContain('root:');
+    expect(formatViewerEditorValue({ root: 'ok' }, 'JM-JSON')).toContain('"root": "ok"');
   });
 
   it('resolves iframe payload messages from embedded viewer host pages', () => {
