@@ -89,6 +89,7 @@ const viewerPanelMaxViewportRatio = 0.5;
 const viewerPanelViewportInset = 24;
 const viewerPanelKeyboardStep = 16;
 const viewerPanelLargeKeyboardStep = 48;
+const viewerActionFeedbackDurationMs = 1200;
 
 const sendRuntimeMessage = async <T = unknown>(message: JsonMateRuntimeMessage): Promise<T | null> => {
   try {
@@ -205,6 +206,7 @@ interface EditorConflictState {
 }
 
 type ViewerToolFilterMode = 'auto' | 'all' | 'text' | 'json' | 'time' | 'state';
+type ViewerActionFeedbackId = 'copy-key' | 'copy-path' | 'copy-value' | 'apply-edit' | 'apply-key-edit' | 'collection-save';
 const SearchIcon = () => (
   <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
     <path d="M10.4 4a6.4 6.4 0 1 1 0 12.8 6.4 6.4 0 0 1 0-12.8zm0 2a4.4 4.4 0 1 0 0 8.8 4.4 4.4 0 0 0 0-8.8z" />
@@ -282,6 +284,12 @@ const CopyIcon = () => (
   <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
     <path d="M9 4.8A2.8 2.8 0 0 1 11.8 2h6.4A2.8 2.8 0 0 1 21 4.8v8.4a2.8 2.8 0 0 1-2.8 2.8h-6.4A2.8 2.8 0 0 1 9 13.2zm2.8-.8a.8.8 0 0 0-.8.8v8.4a.8.8 0 0 0 .8.8h6.4a.8.8 0 0 0 .8-.8V4.8a.8.8 0 0 0-.8-.8z" />
     <path d="M5.8 8A2.8 2.8 0 0 1 8 8.9a1 1 0 1 1-1.5 1.3.8.8 0 0 0-.7-.2.8.8 0 0 0-.8.8v8.4a.8.8 0 0 0 .8.8h6.4a.8.8 0 0 0 .8-.8.8.8 0 0 0-.1-.4 1 1 0 1 1 1.7-1 .8.8 0 0 1 .4 1.4 2.8 2.8 0 0 1-2.8 2.8H5.8A2.8 2.8 0 0 1 3 19.2v-8.4A2.8 2.8 0 0 1 5.8 8z" />
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+    <path d="M9.6 16.6a1 1 0 0 1-1.4 0l-3.1-3.1a1 1 0 1 1 1.4-1.4l2.4 2.4 8.6-8.6a1 1 0 1 1 1.4 1.4z" />
   </svg>
 );
 
@@ -363,6 +371,46 @@ const isTreeToggleHitTarget = (target: EventTarget | null) => (
   target instanceof Element && Boolean(target.closest('.treeToggleHitbox'))
 );
 
+const writeClipboardText = async (value: string) => {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return;
+    }
+  } catch {
+    // Fall through to the selection-based copy path below.
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.value = value;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.top = '0';
+  textarea.style.left = '0';
+  textarea.style.width = '1px';
+  textarea.style.height = '1px';
+  textarea.style.opacity = '0';
+  textarea.style.pointerEvents = 'none';
+  document.body.append(textarea);
+  textarea.focus({ preventScroll: true });
+  textarea.select();
+
+  try {
+    if (!document.execCommand('copy')) {
+      throw new Error('copy failed');
+    }
+  } finally {
+    textarea.remove();
+  }
+};
+
+const ViewerActionTooltip = ({ edgeEnd = false, label }: { edgeEnd?: boolean; label: string }) => (
+  <>
+    <span className="srOnly">{label}</span>
+    <span aria-hidden="true" className={`viewerActionTooltip${edgeEnd ? ' viewerActionTooltip--edge-end' : ''}`}>{label}</span>
+  </>
+);
+
 interface ViewerInlineValueProps {
   fieldKey?: string | number | null;
   jsonEngine: JsonMateSettings['jsonEngine'];
@@ -415,6 +463,7 @@ const ViewerInlineValue = ({
         <span className="value-text">{displayValue}</span>
         {showLinks && externalUrlHref ? (
           <a
+            aria-label={openLinkTitle}
             className="value-inline-link"
             href={externalUrlHref}
             onClick={(event) => event.stopPropagation()}
@@ -423,10 +472,12 @@ const ViewerInlineValue = ({
             title={openLinkTitle}
           >
             <LinkIcon />
+            <ViewerActionTooltip label={openLinkTitle} />
           </a>
         ) : null}
         {canOpenDetachedValue ? (
           <button
+            aria-label={openDetachedValueTitle}
             className="value-inline-action"
             onClick={(event) => {
               event.stopPropagation();
@@ -436,6 +487,7 @@ const ViewerInlineValue = ({
             type="button"
           >
             <DetachedValueIcon />
+            <ViewerActionTooltip label={openDetachedValueTitle} />
           </button>
         ) : null}
       </span>
@@ -593,6 +645,7 @@ const ViewerTreeBranch = ({
                 {showArrayLength && childCount > -1 ? <span className="array-length">{childCount}</span> : null}
                 {showSeparateExternalAction ? (
                   <a
+                    aria-label={openLinkTitle}
                     className="treeValueLink viewerIconButton jmViewerIconAction iconButton iconButton--link"
                     href={childExternalHref!}
                     onClick={(event) => event.stopPropagation()}
@@ -601,10 +654,12 @@ const ViewerTreeBranch = ({
                     title={openLinkTitle}
                   >
                     <LinkIcon />
+                    <ViewerActionTooltip label={openLinkTitle} />
                   </a>
                 ) : null}
                 {showSeparateDetachedAction ? (
                   <button
+                    aria-label={openDetachedValueTitle}
                     className="treeValueLink viewerIconButton jmViewerIconAction iconButton iconButton--detached"
                     onClick={(event) => {
                       event.stopPropagation();
@@ -614,6 +669,7 @@ const ViewerTreeBranch = ({
                     type="button"
                   >
                     <DetachedValueIcon />
+                    <ViewerActionTooltip label={openDetachedValueTitle} />
                   </button>
                 ) : null}
               </div>
@@ -1103,6 +1159,7 @@ export function App() {
     [rootPathKey]: true
   });
   const [statusText, setStatusText] = useState('');
+  const [confirmedActionId, setConfirmedActionId] = useState<ViewerActionFeedbackId | null>(null);
   const searchButtonRef = useRef<HTMLButtonElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const sourceInputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -1118,9 +1175,20 @@ export function App() {
   const collectionNewInputRef = useRef<HTMLInputElement | null>(null);
   const viewerPanelWidthRef = useRef(viewerPanelWidth);
   const editorHighlightRef = useRef<HTMLPreElement | null>(null);
+  const actionFeedbackTimerRef = useRef<number | null>(null);
 
   const lang = settings?.lang || 'en';
   const messages = getViewerMessages(lang);
+  const isActionConfirmed = (actionId: ViewerActionFeedbackId) => confirmedActionId === actionId;
+  const getActionFeedbackLabel = (actionId: ViewerActionFeedbackId, idleLabel: string, confirmedLabel: string) => (
+    isActionConfirmed(actionId) ? confirmedLabel : idleLabel
+  );
+  const getActionFeedbackState = (actionId: ViewerActionFeedbackId) => (
+    isActionConfirmed(actionId) ? 'success' : undefined
+  );
+  const getActionFeedbackClassName = (baseClassName: string, actionId: ViewerActionFeedbackId) => (
+    `${baseClassName}${isActionConfirmed(actionId) ? ' is-action-confirmed' : ''}`
+  );
   const currentValue = viewerState && hasSelection ? getValueAtPath(viewerState.payload.data, selectedPath) : undefined;
   const currentValueInfo = hasSelection && viewerState
     ? getViewerNodeDisplayData(currentValue, selectedPath[selectedPath.length - 1] ?? null)
@@ -1489,10 +1557,25 @@ export function App() {
     }));
   });
 
-  const copyText = useEffectEvent(async (value: string, nextStatus: string) => {
+  const markActionConfirmed = useEffectEvent((actionId: ViewerActionFeedbackId) => {
+    if (actionFeedbackTimerRef.current !== null) {
+      window.clearTimeout(actionFeedbackTimerRef.current);
+    }
+
+    setConfirmedActionId(actionId);
+    actionFeedbackTimerRef.current = window.setTimeout(() => {
+      setConfirmedActionId((current) => current === actionId ? null : current);
+      actionFeedbackTimerRef.current = null;
+    }, viewerActionFeedbackDurationMs);
+  });
+
+  const copyText = useEffectEvent(async (value: string, nextStatus: string, actionId?: ViewerActionFeedbackId) => {
     try {
-      await navigator.clipboard.writeText(value);
+      await writeClipboardText(value);
       setStatusText(nextStatus);
+      if (actionId) {
+        markActionConfirmed(actionId);
+      }
     } catch {
       setErrorText(messages.copyError);
     }
@@ -1505,7 +1588,8 @@ export function App() {
 
   const applyResolvedViewerEdit = useEffectEvent((
     nextValue: unknown,
-    source: 'manual' | 'tool'
+    source: 'manual' | 'tool',
+    actionId?: ViewerActionFeedbackId
   ) => {
     if (!settings || !viewerState || !hasSelection) {
       return;
@@ -1546,6 +1630,9 @@ export function App() {
       ...current,
       ...ensureExpandedAncestors(nextPath)
     }));
+    if (actionId) {
+      markActionConfirmed(actionId);
+    }
   });
 
   const applyToolkitReturnValue = useEffectEvent((nextValue: string) => {
@@ -1559,14 +1646,18 @@ export function App() {
     setStatusText(messages.statusReady);
   });
 
-  const commitViewerEdit = useEffectEvent((nextEditorText: string, source: 'manual' | 'tool' = 'manual') => {
+  const commitViewerEdit = useEffectEvent((
+    nextEditorText: string,
+    source: 'manual' | 'tool' = 'manual',
+    actionId?: ViewerActionFeedbackId
+  ) => {
     if (!settings || !viewerState || !hasSelection) {
       return;
     }
 
     try {
       const nextValue = parseViewerEditorValue(nextEditorText, currentValue, settings.jsonEngine);
-      applyResolvedViewerEdit(nextValue, source);
+      applyResolvedViewerEdit(nextValue, source, actionId);
     } catch (error) {
       const reason = error instanceof Error ? error.message : messages.statusError;
       setEditorConflict(typeof currentValue === 'string' ? null : {
@@ -1929,6 +2020,7 @@ export function App() {
       setCollectionDialogError('');
       setIsCollectionDialogOpen(false);
       setStatusText(messages.collectionSaved);
+      markActionConfirmed('collection-save');
     } catch (error) {
       const message = error instanceof Error && error.message === 'collection-limit'
         ? messages.collectionLimitHint
@@ -2127,12 +2219,12 @@ export function App() {
     setStatusText(messages.detachedViewerOpened);
   });
 
-  const applyCurrentEdit = useEffectEvent(() => {
+  const applyCurrentEdit = useEffectEvent((actionId?: ViewerActionFeedbackId) => {
     if (!settings || !viewerState || !hasSelection) {
       return;
     }
 
-    commitViewerEdit(editorText, 'manual');
+    commitViewerEdit(editorText, 'manual', actionId);
   });
 
   const updateViewerPanelWidth = useEffectEvent((nextWidth: number) => {
@@ -2581,6 +2673,13 @@ export function App() {
     };
   }, [statusText]);
 
+  useEffect(() => () => {
+    if (actionFeedbackTimerRef.current !== null) {
+      window.clearTimeout(actionFeedbackTimerRef.current);
+      actionFeedbackTimerRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (!event.data || event.data.cmd !== 'postJson') {
@@ -2722,6 +2821,12 @@ export function App() {
     ? findViewerCollectionEntryByUrl(viewerLibrary.collections, currentSourceUrl)
     : null;
   const collectionButtonTooltip = currentLibraryEntry ? messages.collectionDialogTitle : messages.collectionButtonLabel;
+  const copyKeyActionLabel = getActionFeedbackLabel('copy-key', messages.copyKey, messages.keyCopied);
+  const copyPathActionLabel = getActionFeedbackLabel('copy-path', messages.copyPath, messages.pathCopied);
+  const copyValueActionLabel = getActionFeedbackLabel('copy-value', messages.copyValue, messages.valueCopied);
+  const applyEditActionLabel = getActionFeedbackLabel('apply-edit', messages.applyEdit, messages.editApplied);
+  const applyKeyEditActionLabel = getActionFeedbackLabel('apply-key-edit', messages.applyEdit, messages.editApplied);
+  const collectionActionLabel = getActionFeedbackLabel('collection-save', collectionButtonTooltip, messages.collectionSaved);
   const launcherRecentItems = viewerLibrary.recents;
   const launcherCollectionGroups = groupViewerCollections(viewerLibrary.collections);
   const viewerCollectionNames = getViewerCollectionNames(viewerLibrary.collections);
@@ -3017,6 +3122,7 @@ export function App() {
                           ) : null}
                           {showRootExternalAction ? (
                             <a
+                              aria-label={messages.openLink}
                               className="treeValueLink viewerIconButton jmViewerIconAction iconButton iconButton--link"
                               href={rootExternalHref!}
                               onClick={(event) => event.stopPropagation()}
@@ -3025,6 +3131,7 @@ export function App() {
                               title={messages.openLink}
                             >
                               <LinkIcon />
+                              <ViewerActionTooltip label={messages.openLink} />
                             </a>
                           ) : null}
                         </div>
@@ -3117,17 +3224,18 @@ export function App() {
                     <div className="jmViewerPanelBrandActions">
                       {hasRealSourceUrl ? (
                         <button
-                          className={`viewerIconButton panelActionButton panelActionButton--collection${currentLibraryEntry ? ' is-active' : ''}`}
+                          className={getActionFeedbackClassName(`viewerIconButton panelActionButton panelActionButton--collection${currentLibraryEntry ? ' is-active' : ''}`, 'collection-save')}
                           id="collectionBtn"
+                          data-action-state={getActionFeedbackState('collection-save')}
                           aria-pressed={Boolean(currentLibraryEntry)}
-                          aria-label={collectionButtonTooltip}
+                          aria-label={collectionActionLabel}
                           onClick={() => openCollectionDialog()}
-                          title={collectionButtonTooltip}
+                          title={collectionActionLabel}
                           type="button"
                         >
-                          <CollectionIcon />
-                          <span className="srOnly">{collectionButtonTooltip}</span>
-                          <span aria-hidden="true" className="viewerActionTooltip viewerActionTooltip--edge-end">{collectionButtonTooltip}</span>
+                          {isActionConfirmed('collection-save') ? <CheckIcon /> : <CollectionIcon />}
+                          <span className="srOnly">{collectionActionLabel}</span>
+                          <span aria-hidden="true" className="viewerActionTooltip viewerActionTooltip--edge-end">{collectionActionLabel}</span>
                         </button>
                       ) : null}
                       <a
@@ -3240,6 +3348,7 @@ export function App() {
                           <div className="jmViewerInspectorActions">
                             {typeof currentValue === 'string' && /^https?:\/\//.test(currentValue) ? (
                               <a
+                                aria-label={messages.openLink}
                                 className="viewerIconButton jmViewerIconAction iconButton iconButton--link"
                                 href={currentValue}
                                 id="openCurrentLinkButton"
@@ -3248,9 +3357,11 @@ export function App() {
                                 title={messages.openLink}
                               >
                                 <LinkIcon />
+                                <ViewerActionTooltip label={messages.openLink} />
                               </a>
                             ) : null}
                             <button
+                              aria-label={messages.jumpToPath}
                               className="viewerIconButton jmViewerIconAction iconButton"
                               id="jumpToPathButton"
                               onClick={() => jumpToPathInput()}
@@ -3258,16 +3369,20 @@ export function App() {
                               type="button"
                             >
                               <JumpIcon />
+                              <ViewerActionTooltip label={messages.jumpToPath} />
                             </button>
                             <button
-                              className="viewerIconButton jmViewerIconAction iconButton"
+                              aria-label={copyPathActionLabel}
+                              className={getActionFeedbackClassName('viewerIconButton jmViewerIconAction iconButton', 'copy-path')}
+                              data-action-state={getActionFeedbackState('copy-path')}
                               disabled={!selectedPathLabel}
                               id="copyPathButton"
-                              onClick={() => void copyText(selectedPathLabel, messages.pathCopied)}
-                              title={messages.copyPath}
+                              onClick={() => void copyText(selectedPathLabel, messages.pathCopied, 'copy-path')}
+                              title={copyPathActionLabel}
                               type="button"
                             >
-                              <CopyIcon />
+                              {isActionConfirmed('copy-path') ? <CheckIcon /> : <CopyIcon />}
+                              <ViewerActionTooltip label={copyPathActionLabel} />
                             </button>
                           </div>
                         </div>
@@ -3291,24 +3406,30 @@ export function App() {
                           </span>
                           <div className="jmViewerInspectorActions">
                             <button
-                              className="viewerIconButton jmViewerIconAction iconButton"
+                              aria-label={copyKeyActionLabel}
+                              className={getActionFeedbackClassName('viewerIconButton jmViewerIconAction iconButton', 'copy-key')}
+                              data-action-state={getActionFeedbackState('copy-key')}
                               disabled={selectedPath.length === 0}
                               id="copyKeyBtn"
-                              onClick={() => void copyText(selectedPath.length > 0 ? String(selectedPath[selectedPath.length - 1]) : '', messages.keyCopied)}
-                              title={messages.copyKey}
+                              onClick={() => void copyText(selectedPath.length > 0 ? String(selectedPath[selectedPath.length - 1]) : '', messages.keyCopied, 'copy-key')}
+                              title={copyKeyActionLabel}
                               type="button"
                             >
-                              <CopyIcon />
+                              {isActionConfirmed('copy-key') ? <CheckIcon /> : <CopyIcon />}
+                              <ViewerActionTooltip label={copyKeyActionLabel} />
                             </button>
                             <button
-                              className="viewerIconButton jmViewerIconAction iconButton iconButton--save"
+                              aria-label={applyKeyEditActionLabel}
+                              className={getActionFeedbackClassName('viewerIconButton jmViewerIconAction iconButton iconButton--save', 'apply-key-edit')}
+                              data-action-state={getActionFeedbackState('apply-key-edit')}
                               disabled={!isKeyDirty}
                               id="saveKeyBtn"
-                              onClick={() => applyCurrentEdit()}
-                              title={messages.applyEdit}
+                              onClick={() => applyCurrentEdit('apply-key-edit')}
+                              title={applyKeyEditActionLabel}
                               type="button"
                             >
-                              <SaveIcon />
+                              {isActionConfirmed('apply-key-edit') ? <CheckIcon /> : <SaveIcon />}
+                              <ViewerActionTooltip label={applyKeyEditActionLabel} />
                             </button>
                           </div>
                           <span className={`treeKind kind-${selectedKind}`}>{selectedKind}</span>
@@ -3353,18 +3474,19 @@ export function App() {
                         <div className="editorActionGroup editorActionGroup--primary">
                           <div className="actionButtonSlot" hidden={!hasSelection}>
                             <button
-                              aria-label={messages.applyEdit}
-                              className="jmViewerPrimaryButton jmViewerPrimaryButtonPrimary jmViewerPrimaryButtonIcon actionButton actionButton--primary"
+                              aria-label={applyEditActionLabel}
+                              className={getActionFeedbackClassName('jmViewerPrimaryButton jmViewerPrimaryButtonPrimary jmViewerPrimaryButtonIcon actionButton actionButton--primary', 'apply-edit')}
+                              data-action-state={getActionFeedbackState('apply-edit')}
                               disabled={!hasSelection}
-                              data-tooltip={messages.applyEdit}
+                              data-tooltip={applyEditActionLabel}
                               id="saveBtn"
-                              onClick={() => applyCurrentEdit()}
-                              title={messages.applyEdit}
+                              onClick={() => applyCurrentEdit('apply-edit')}
+                              title={applyEditActionLabel}
                               type="button"
                             >
-                              <SaveIcon />
-                              <span className="srOnly">{messages.applyEdit}</span>
-                              <span aria-hidden="true" className="viewerActionTooltip">{messages.applyEdit}</span>
+                              {isActionConfirmed('apply-edit') ? <CheckIcon /> : <SaveIcon />}
+                              <span className="srOnly">{applyEditActionLabel}</span>
+                              <span aria-hidden="true" className="viewerActionTooltip">{applyEditActionLabel}</span>
                             </button>
                             <div className="undoConfirmPopover" hidden={!editorConflict} id="editorConflictActions">
                               <span className="undoConfirmMessage">{messages.invalidTypedEdit}</span>
@@ -3442,18 +3564,19 @@ export function App() {
                             </button>
                           ) : null}
                           <button
-                            aria-label={messages.copyValue}
-                            className="jmViewerPrimaryButton jmViewerPrimaryButtonIcon actionButton"
+                            aria-label={copyValueActionLabel}
+                            className={getActionFeedbackClassName('jmViewerPrimaryButton jmViewerPrimaryButtonIcon actionButton', 'copy-value')}
                             disabled={!hasSelection}
-                            data-tooltip={messages.copyValue}
+                            data-action-state={getActionFeedbackState('copy-value')}
+                            data-tooltip={copyValueActionLabel}
                             id="copyValue"
-                            onClick={() => void copyText(settings ? serializeViewerNodeValue(currentValue, settings.jsonEngine) : editorText, messages.valueCopied)}
-                            title={messages.copyValue}
+                            onClick={() => void copyText(settings ? serializeViewerNodeValue(currentValue, settings.jsonEngine) : editorText, messages.valueCopied, 'copy-value')}
+                            title={copyValueActionLabel}
                             type="button"
                           >
-                            <CopyIcon />
-                            <span className="srOnly">{messages.copyValue}</span>
-                            <span aria-hidden="true" className="viewerActionTooltip">{messages.copyValue}</span>
+                            {isActionConfirmed('copy-value') ? <CheckIcon /> : <CopyIcon />}
+                            <span className="srOnly">{copyValueActionLabel}</span>
+                            <span aria-hidden="true" className="viewerActionTooltip">{copyValueActionLabel}</span>
                           </button>
                           {typeof currentValue === 'string' && /^https?:\/\//.test(currentValue) ? (
                             <a
@@ -3825,11 +3948,14 @@ export function App() {
                           value={selectedPathLabel}
                         />
                         <button
-                          className="viewerInlineAction"
-                          onClick={() => void copyText(selectedPathLabel, messages.pathCopied)}
+                          aria-label={copyPathActionLabel}
+                          className={getActionFeedbackClassName('viewerInlineAction', 'copy-path')}
+                          data-action-state={getActionFeedbackState('copy-path')}
+                          onClick={() => void copyText(selectedPathLabel, messages.pathCopied, 'copy-path')}
+                          title={copyPathActionLabel}
                           type="button"
                         >
-                          {messages.copyPath}
+                          {copyPathActionLabel}
                         </button>
                       </div>
                     </label>
@@ -3866,8 +3992,13 @@ export function App() {
                 />
                 <div className="viewerToolbar">
                   <div className="actionButtonSlot viewerActionSlot">
-                    <button className="viewerButton" onClick={() => applyCurrentEdit()} type="button">
-                      {messages.applyEdit}
+                    <button
+                      className={getActionFeedbackClassName('viewerButton', 'apply-edit')}
+                      data-action-state={getActionFeedbackState('apply-edit')}
+                      onClick={() => applyCurrentEdit('apply-edit')}
+                      type="button"
+                    >
+                      {applyEditActionLabel}
                     </button>
                     <div className="undoConfirmPopover" hidden={!editorConflict} id="viewerEditorConflictActions">
                       <span className="undoConfirmMessage">{messages.invalidTypedEdit}</span>
@@ -3891,18 +4022,24 @@ export function App() {
                     </div>
                   </div>
                   <button
-                    className="viewerButton secondary"
-                    onClick={() => void copyText(selectedPathLabel, messages.pathCopied)}
+                    aria-label={copyPathActionLabel}
+                    className={getActionFeedbackClassName('viewerButton secondary', 'copy-path')}
+                    data-action-state={getActionFeedbackState('copy-path')}
+                    onClick={() => void copyText(selectedPathLabel, messages.pathCopied, 'copy-path')}
+                    title={copyPathActionLabel}
                     type="button"
                   >
-                    {messages.copyPath}
+                    {copyPathActionLabel}
                   </button>
                   <button
-                    className="viewerButton secondary"
-                    onClick={() => void copyText(editorText, messages.valueCopied)}
+                    aria-label={copyValueActionLabel}
+                    className={getActionFeedbackClassName('viewerButton secondary', 'copy-value')}
+                    data-action-state={getActionFeedbackState('copy-value')}
+                    onClick={() => void copyText(editorText, messages.valueCopied, 'copy-value')}
+                    title={copyValueActionLabel}
                     type="button"
                   >
-                    {messages.copyValue}
+                    {copyValueActionLabel}
                   </button>
                 </div>
               </>
@@ -3948,6 +4085,7 @@ export function App() {
                   <span>{messages.pathSearchHint}</span>
                 </div>
                 <button
+                  aria-label={messages.pathSearchClose}
                   className="iconButton iconButton--close"
                   id="pathSearchClose"
                   onClick={() => closeSearch()}
@@ -3955,7 +4093,7 @@ export function App() {
                   type="button"
                 >
                   <span aria-hidden="true">×</span>
-                  <span className="srOnly">{messages.pathSearchClose}</span>
+                  <ViewerActionTooltip edgeEnd label={messages.pathSearchClose} />
                 </button>
               </div>
               <div className="pathSearchDialog-body">

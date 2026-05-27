@@ -1,4 +1,4 @@
-import { expect, test, chromium, type BrowserContext, type Page, type FrameLocator } from '@playwright/test';
+import { expect, test, chromium, type BrowserContext, type Page, type FrameLocator, type Locator } from '@playwright/test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
@@ -36,6 +36,40 @@ const resolveLauncherViewerUrl = async (page: Page) => {
   launcherUrl.search = '?type=iframe&launcher=1';
   launcherUrl.hash = '';
   return launcherUrl.toString();
+};
+
+const expectReadableTooltip = async (button: Locator, selector: string) => {
+  await button.hover();
+  const tooltip = button.locator('.viewerActionTooltip');
+  await expect(tooltip).toBeVisible();
+
+  const metrics = await tooltip.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return {
+      clientWidth: (element as HTMLElement).clientWidth,
+      rect: {
+        bottom: rect.bottom,
+        left: rect.left,
+        right: rect.right,
+        top: rect.top
+      },
+      scrollWidth: (element as HTMLElement).scrollWidth,
+      text: element.textContent ?? '',
+      viewport: {
+        height: window.innerHeight,
+        width: window.innerWidth
+      }
+    };
+  });
+
+  expect(metrics.rect.left, `${selector} tooltip should stay inside the viewport`).toBeGreaterThanOrEqual(0);
+  expect(metrics.rect.top, `${selector} tooltip should stay inside the viewport`).toBeGreaterThanOrEqual(0);
+  expect(metrics.rect.right, `${selector} tooltip should stay inside the viewport`).toBeLessThanOrEqual(metrics.viewport.width);
+  expect(metrics.rect.bottom, `${selector} tooltip should stay inside the viewport`).toBeLessThanOrEqual(metrics.viewport.height);
+  expect(
+    metrics.clientWidth + 1,
+    `${selector} tooltip should fit "${metrics.text}" instead of clipping it`
+  ).toBeGreaterThanOrEqual(metrics.scrollWidth);
 };
 
 test.beforeEach(async () => {
@@ -129,6 +163,10 @@ test('keeps semantic links usable while preserving image previews', async () => 
   await expect(avatarRow).toBeVisible();
   await expect(homepageRow.locator('img.value-preview-image')).toHaveCount(0);
   await expect(homepageRow.locator('a.value-inline-link')).toHaveCount(1);
+  const inlineLinkButton = homepageRow.locator('a.value-inline-link');
+  await expect(inlineLinkButton).toHaveAttribute('aria-label', 'Open link');
+  await expect(inlineLinkButton.locator('.viewerActionTooltip')).toHaveText('Open link');
+  await expectReadableTooltip(inlineLinkButton, 'a.value-inline-link');
   await expect(viewer.locator(`a.treeValueLink[href="${TOOLS_HOMEPAGE_URL}"]`)).toHaveCount(0);
   await expect(avatarRow.locator('img.value-preview-image')).toHaveCount(1);
 
@@ -155,17 +193,21 @@ test('uses feature-specific close actions in iframe dialogs', async () => {
   await searchButton.click();
   await expect(searchInput).toBeVisible();
   await expect(searchInput).toBeFocused();
-  await expect(viewer.locator('#pathSearchClose')).toContainText('Close search');
+  const searchCloseButton = viewer.locator('#pathSearchClose');
+  await expect(searchCloseButton).toHaveAttribute('aria-label', 'Close search');
+  await expect(searchCloseButton).toHaveAttribute('title', 'Close search');
+  await expect(searchCloseButton.locator('.viewerActionTooltip')).toHaveText('Close search');
+  await expectReadableTooltip(searchCloseButton, '#pathSearchClose');
 
   await viewer.locator('.pathSearchModeButton:has-text("Values")').click();
   await expect(searchInput).toBeVisible();
   await expect(searchInput).toBeFocused();
-  await viewer.locator('#pathSearchClose').click();
+  await searchCloseButton.click();
   await expect(viewer.locator('#pathSearchOverlay')).toBeHidden();
 
   await searchButton.click();
   await expect(viewer.locator('.pathSearchModeButton.is-active')).toContainText('Values');
-  await viewer.locator('#pathSearchClose').click();
+  await searchCloseButton.click();
   await expect(viewer.locator('#pathSearchOverlay')).toBeHidden();
 
   await viewer.locator('#openToolkit').click();
@@ -357,20 +399,33 @@ test('renders icon-first workspace toolbar actions with tooltips', async () => {
     expect(box.width).toBeGreaterThanOrEqual(40);
     expect(box.height).toBeGreaterThanOrEqual(40);
 
-    await button.hover();
-    const tooltip = button.locator('.viewerActionTooltip');
-    await expect(tooltip).toBeVisible();
+    await expectReadableTooltip(button, selector);
+  }
 
-    if (selector === '#expandCur') {
-      const tooltipBox = await tooltip.boundingBox();
-      expect(tooltipBox).not.toBeNull();
-      if (!tooltipBox) {
-        throw new Error('missing tooltip bounding box for #expandCur');
-      }
+  await page.close();
+});
 
-      expect(tooltipBox.x).toBeGreaterThanOrEqual(0);
-      expect(tooltipBox.y).toBeGreaterThanOrEqual(0);
-    }
+test('renders icon-first inspector actions with readable hover tooltips', async () => {
+  const { page, viewer } = await openFixtureViewer(TOOLS_FIXTURE_URL);
+  const homepageRow = viewer.locator('button:has-text("homepage")').first();
+
+  await homepageRow.click();
+
+  const inspectorButtons = [
+    { selector: '#openCurrentLinkButton', title: 'Open link' },
+    { selector: '#jumpToPathButton', title: 'Jump to path' },
+    { selector: '#copyPathButton', title: 'Copy path' },
+    { selector: '#copyKeyBtn', title: 'Copy key' },
+    { selector: '#saveKeyBtn', title: 'Apply edit' }
+  ] as const;
+
+  for (const { selector, title } of inspectorButtons) {
+    const button = viewer.locator(selector);
+    await expect(button).toHaveAttribute('aria-label', title);
+    await expect(button).toHaveAttribute('title', title);
+    await expect(button.locator('span.srOnly')).toHaveCount(1);
+    await expect(button.locator('.viewerActionTooltip')).toHaveText(title);
+    await expectReadableTooltip(button, selector);
   }
 
   await page.close();
@@ -404,14 +459,42 @@ test('renders icon-first value actions with visible hover tooltips', async () =>
     expect(box.width).toBeGreaterThanOrEqual(40);
     expect(box.height).toBeGreaterThanOrEqual(40);
 
-    await button.hover();
-    await expect(button.locator('.viewerActionTooltip')).toBeVisible();
+    await expectReadableTooltip(button, selector);
   }
 
   const moreToolsButton = viewer.locator('.jmViewerShelfActionIcon');
   await expect(moreToolsButton).toHaveAttribute('title', 'More');
-  await moreToolsButton.hover();
-  await expect(moreToolsButton.locator('.viewerActionTooltip')).toBeVisible();
+  await expectReadableTooltip(moreToolsButton, '.jmViewerShelfActionIcon');
+
+  await page.close();
+});
+
+test('shows button-level feedback after copy actions complete', async () => {
+  const { page, viewer } = await openFixtureViewer(TOOLS_FIXTURE_URL);
+  const rawRow = viewer.locator('button:has(.treeKey.object-key:text-is("raw"))').first();
+
+  await rawRow.click();
+
+  const copyValueButton = viewer.locator('#copyValue');
+  await copyValueButton.click();
+  await expect(copyValueButton).toHaveAttribute('data-action-state', 'success');
+  await expect(copyValueButton).toHaveAttribute('aria-label', 'Value copied');
+  await expect(copyValueButton).toHaveAttribute('title', 'Value copied');
+  await expect(copyValueButton.locator('.viewerActionTooltip')).toHaveText('Value copied');
+
+  const copyPathButton = viewer.locator('#copyPathButton');
+  await copyPathButton.click();
+  await expect(copyPathButton).toHaveAttribute('data-action-state', 'success');
+  await expect(copyPathButton).toHaveAttribute('aria-label', 'Path copied');
+  await expect(copyPathButton).toHaveAttribute('title', 'Path copied');
+  await expect(copyPathButton.locator('.viewerActionTooltip')).toHaveText('Path copied');
+
+  const copyKeyButton = viewer.locator('#copyKeyBtn');
+  await copyKeyButton.click();
+  await expect(copyKeyButton).toHaveAttribute('data-action-state', 'success');
+  await expect(copyKeyButton).toHaveAttribute('aria-label', 'Key copied');
+  await expect(copyKeyButton).toHaveAttribute('title', 'Key copied');
+  await expect(copyKeyButton.locator('.viewerActionTooltip')).toHaveText('Key copied');
 
   await page.close();
 });

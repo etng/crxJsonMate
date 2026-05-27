@@ -5,6 +5,7 @@
   --viewer-ink: #16312a;
   --viewer-muted: #5a6b66;
   --viewer-accent: #0f766e;
+  --viewer-success: #15803d;
   --viewer-accent-soft: color-mix(in srgb, white 88%, var(--viewer-accent) 12%);
   --viewer-shadow: 0 28px 60px rgba(16, 24, 40, 0.12);
   --viewer-mono: "SFMono-Regular", "Cascadia Code", Consolas, monospace;
@@ -152,6 +153,7 @@ textarea {
 .viewerButton {
   background: var(--viewer-accent);
   color: #fff;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease;
 }
 
 .viewerButton.secondary {
@@ -183,6 +185,35 @@ textarea {
 .viewerIconButton {
   width: 40px;
   padding: 0;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.iconButton {
+  position: relative;
+  overflow: visible;
+}
+
+.iconButton--close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  border: 1px solid var(--viewer-ui-border);
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--viewer-ui-surface), var(--viewer-ui-surface-strong));
+  color: var(--viewer-ui-ink);
+  box-shadow: var(--viewer-ui-shadow);
+  cursor: pointer;
+}
+
+.iconButton--close:hover,
+.iconButton--close:focus-visible {
+  border-color: var(--viewer-ui-border-strong);
+  background: linear-gradient(180deg, var(--viewer-ui-surface-strong), var(--viewer-ui-surface-active));
 }
 
 .viewerToolbarButton {
@@ -710,6 +741,7 @@ textarea {
   color: var(--viewer-ui-ink);
   box-shadow: var(--viewer-ui-shadow);
   cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease;
 }
 
 .viewerSourceCard.isHidden {
@@ -1483,6 +1515,8 @@ textarea {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  overflow: visible;
   width: 22px;
   height: 22px;
   flex: 0 0 auto;
@@ -2168,6 +2202,8 @@ textarea {
 }
 
 .jmViewerIconAction {
+  position: relative;
+  overflow: visible;
   width: 36px;
   min-width: 36px;
   height: 36px;
@@ -2177,6 +2213,7 @@ textarea {
   background: linear-gradient(180deg, var(--viewer-ui-surface), var(--viewer-ui-surface-strong));
   color: var(--viewer-ui-ink);
   box-shadow: var(--viewer-ui-shadow);
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease;
 }
 
 .jmViewerIconAction:hover,
@@ -2361,6 +2398,7 @@ textarea {
   text-decoration: none;
   box-shadow: var(--viewer-ui-shadow);
   font-size: 12px;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease;
 }
 
 .jmViewerPrimaryButtonIcon {
@@ -2418,6 +2456,40 @@ textarea {
   background: linear-gradient(180deg, var(--viewer-ui-surface), var(--viewer-ui-surface-strong));
 }
 
+.viewerButton.is-action-confirmed,
+.viewerInlineAction.is-action-confirmed,
+.jmViewerIconAction.is-action-confirmed,
+.jmViewerPrimaryButton.is-action-confirmed,
+.panelActionButton.is-action-confirmed {
+  border-color: color-mix(in srgb, white 45%, var(--viewer-success) 55%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, white 78%, var(--viewer-success) 22%),
+    color-mix(in srgb, white 66%, var(--viewer-success) 34%)
+  );
+  color: color-mix(in srgb, var(--viewer-success) 72%, #062a18 28%);
+  box-shadow: 0 12px 24px color-mix(in srgb, transparent 74%, var(--viewer-success) 26%);
+}
+
+.viewerButton.is-action-confirmed:not(.secondary),
+.jmViewerPrimaryButtonPrimary.is-action-confirmed {
+  border-color: color-mix(in srgb, white 34%, var(--viewer-success) 66%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, white 18%, var(--viewer-success) 82%),
+    var(--viewer-success)
+  );
+  color: #fff;
+}
+
+.is-action-confirmed .viewerActionTooltip {
+  background: color-mix(in srgb, var(--viewer-success) 86%, #052e16 14%);
+}
+
+[data-action-state="success"] svg {
+  transform: scale(1.08);
+}
+
 .viewerToolbarButtonCompact {
   min-height: 36px;
   padding: 0 12px;
@@ -2432,14 +2504,18 @@ textarea {
   top: calc(100% + 10px);
   bottom: auto;
   transform: translate(-50%, -4px);
+  width: max-content;
+  max-width: min(220px, calc(100vw - 24px));
   padding: 7px 10px;
   border-radius: 10px;
   background: color-mix(in srgb, var(--viewer-accent) 84%, #042f2e 16%);
   color: #f8fffd;
   font-size: 11px;
   font-weight: 700;
-  line-height: 1;
-  white-space: nowrap;
+  line-height: 1.18;
+  overflow-wrap: anywhere;
+  text-align: center;
+  white-space: normal;
   box-shadow: 0 12px 24px color-mix(in srgb, var(--viewer-accent) 22%, transparent 78%);
   pointer-events: none;
   opacity: 0;
@@ -2465,6 +2541,14 @@ textarea {
 .jmViewerShelfActionIcon:focus-visible .viewerActionTooltip,
 .jmViewerPrimaryButtonIcon:hover .viewerActionTooltip,
 .jmViewerPrimaryButtonIcon:focus-visible .viewerActionTooltip,
+.jmViewerIconAction:hover .viewerActionTooltip,
+.jmViewerIconAction:focus-visible .viewerActionTooltip,
+.value-inline-link:hover .viewerActionTooltip,
+.value-inline-link:focus-visible .viewerActionTooltip,
+.value-inline-action:hover .viewerActionTooltip,
+.value-inline-action:focus-visible .viewerActionTooltip,
+.iconButton--close:hover .viewerActionTooltip,
+.iconButton--close:focus-visible .viewerActionTooltip,
 .panelActionButton:hover .viewerActionTooltip,
 .panelActionButton:focus-visible .viewerActionTooltip {
   opacity: 1;
@@ -2472,33 +2556,33 @@ textarea {
   transform: translate(-50%, 0);
 }
 
-.workspaceToolbar-group > .actionButton:first-child:not(:last-child) .viewerActionTooltip,
-.jmViewerPrimaryActions > .actionButtonSlot:first-child .viewerActionTooltip,
-.jmViewerPanelBrandActions > .panelActionButton:first-child:not(:last-child) .viewerActionTooltip {
+.workspaceToolbar-group > .actionButton:first-child:not(:last-child) .viewerActionTooltip:not(.viewerActionTooltip--edge-end),
+.jmViewerPrimaryActions > .actionButtonSlot:first-child .viewerActionTooltip:not(.viewerActionTooltip--edge-end),
+.jmViewerPanelBrandActions > .panelActionButton:first-child:not(:last-child) .viewerActionTooltip:not(.viewerActionTooltip--edge-end) {
   left: 0;
   transform: translate(0, -4px);
 }
 
-.workspaceToolbar-group > .actionButton:last-child:not(:first-child) .viewerActionTooltip,
-.jmViewerPrimaryActions > .actionButtonSlot:last-child .viewerActionTooltip,
-.jmViewerPanelBrandActions > .panelActionButton:last-child:not(:first-child) .viewerActionTooltip {
+.workspaceToolbar-group > .actionButton:last-child:not(:first-child) .viewerActionTooltip:not(.viewerActionTooltip--edge-end),
+.jmViewerPrimaryActions > .actionButtonSlot:last-child .viewerActionTooltip:not(.viewerActionTooltip--edge-end),
+.jmViewerPanelBrandActions > .panelActionButton:last-child:not(:first-child) .viewerActionTooltip:not(.viewerActionTooltip--edge-end) {
   left: auto;
   right: 0;
   transform: translate(0, -4px);
 }
 
-.workspaceToolbar-group > .actionButton:first-child:not(:last-child):hover .viewerActionTooltip,
-.workspaceToolbar-group > .actionButton:first-child:not(:last-child):focus-visible .viewerActionTooltip,
-.jmViewerPrimaryActions > .actionButtonSlot:first-child:hover .viewerActionTooltip,
-.jmViewerPrimaryActions > .actionButtonSlot:first-child:focus-within .viewerActionTooltip,
-.jmViewerPanelBrandActions > .panelActionButton:first-child:not(:last-child):hover .viewerActionTooltip,
-.jmViewerPanelBrandActions > .panelActionButton:first-child:not(:last-child):focus-visible .viewerActionTooltip,
-.workspaceToolbar-group > .actionButton:last-child:not(:first-child):hover .viewerActionTooltip,
-.workspaceToolbar-group > .actionButton:last-child:not(:first-child):focus-visible .viewerActionTooltip,
-.jmViewerPrimaryActions > .actionButtonSlot:last-child:hover .viewerActionTooltip,
-.jmViewerPrimaryActions > .actionButtonSlot:last-child:focus-within .viewerActionTooltip,
-.jmViewerPanelBrandActions > .panelActionButton:last-child:not(:first-child):hover .viewerActionTooltip,
-.jmViewerPanelBrandActions > .panelActionButton:last-child:not(:first-child):focus-visible .viewerActionTooltip {
+.workspaceToolbar-group > .actionButton:first-child:not(:last-child):hover .viewerActionTooltip:not(.viewerActionTooltip--edge-end),
+.workspaceToolbar-group > .actionButton:first-child:not(:last-child):focus-visible .viewerActionTooltip:not(.viewerActionTooltip--edge-end),
+.jmViewerPrimaryActions > .actionButtonSlot:first-child:hover .viewerActionTooltip:not(.viewerActionTooltip--edge-end),
+.jmViewerPrimaryActions > .actionButtonSlot:first-child:focus-within .viewerActionTooltip:not(.viewerActionTooltip--edge-end),
+.jmViewerPanelBrandActions > .panelActionButton:first-child:not(:last-child):hover .viewerActionTooltip:not(.viewerActionTooltip--edge-end),
+.jmViewerPanelBrandActions > .panelActionButton:first-child:not(:last-child):focus-visible .viewerActionTooltip:not(.viewerActionTooltip--edge-end),
+.workspaceToolbar-group > .actionButton:last-child:not(:first-child):hover .viewerActionTooltip:not(.viewerActionTooltip--edge-end),
+.workspaceToolbar-group > .actionButton:last-child:not(:first-child):focus-visible .viewerActionTooltip:not(.viewerActionTooltip--edge-end),
+.jmViewerPrimaryActions > .actionButtonSlot:last-child:hover .viewerActionTooltip:not(.viewerActionTooltip--edge-end),
+.jmViewerPrimaryActions > .actionButtonSlot:last-child:focus-within .viewerActionTooltip:not(.viewerActionTooltip--edge-end),
+.jmViewerPanelBrandActions > .panelActionButton:last-child:not(:first-child):hover .viewerActionTooltip:not(.viewerActionTooltip--edge-end),
+.jmViewerPanelBrandActions > .panelActionButton:last-child:not(:first-child):focus-visible .viewerActionTooltip:not(.viewerActionTooltip--edge-end) {
   transform: translate(0, 0);
 }
 
@@ -2510,7 +2594,9 @@ textarea {
 }
 
 .panelActionButton:hover .viewerActionTooltip--edge-end,
-.panelActionButton:focus-visible .viewerActionTooltip--edge-end {
+.panelActionButton:focus-visible .viewerActionTooltip--edge-end,
+.iconButton--close:hover .viewerActionTooltip--edge-end,
+.iconButton--close:focus-visible .viewerActionTooltip--edge-end {
   transform: translate(0, 0);
 }
 
