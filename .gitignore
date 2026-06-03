@@ -1,5 +1,6 @@
 .DS_Store
 AGENTS.md
+.docs/
 node_modules/
 .wxt/
 .output/
