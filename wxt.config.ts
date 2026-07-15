@@ -8,7 +8,7 @@ export default defineConfig({
     name: 'JSON Mate',
     description: 'Inspect JSON, JSONP, and JSONL payloads with a typed viewer and toolkit.',
     homepage_url: 'https://json-mate.0o666.xyz',
-    key: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvUYe9OQ5qd1molQIB+gGiG7UDmO/hreY7QeIZfCm+27D21WFVpwVuRqBr3lDv3u+fVPGQxxE+qcytj/3gAJzyAtD9SwHChZFLM/kyik7MAoCKj9i6wVGq06FD9GK4x5gdiHxW6AgTtAFDWe/YaD65kOr184gg9WwszTZlNmfIXuw+JHVRPOmvr/V4gkcxcy43Xv+rePfTFyu7mshXlZSG1XbpWXzTc0NtEmf+SEXaxDHIDQOOY6g/IgUc5bUi+T6caMuuhDVb32Vs/gXTHgXqteuEo7OPeb+oXOMXdojzZbNyIw5UTtwjSYL88SnpSF/6bHrPJ1TDIMoxS3c9RxwlwIDAQAB',
+    key: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3tzat+/ablEoMTDqNQuKDgJOKWFCFlWcYB+czhUV0ogHNEKNMuYdEGRfcekHH/3Q//wEMLYeHLE6QQTidek+cnQY/yL8z/xX55RLPyVFunmsxPn/aBMxP8sgDjaqt83SSoIj2PwtgqntoukfIRKQtCsPlMDPTz7uPvkSMd8ZL7Tl0yN/jzdk85Eoe/e53jkDvze6PPCEmqqFxDoCUkrxb9ozbEcMyo12rb26AYTDbPZM+CtUg99GWZrtaBHKp2nQ+qp/Dw4S6sFRKFkmG/cYsfZpp9wfIX90b7g2OuEg50/Sj6G4mXd9in0T9pRxG8geexBrLLq4HjetOC3hl562yQIDAQAB',
     permissions: ['contextMenus', 'storage', 'tabs'],
     host_permissions: ['*://*/*'],
     action: {
