@@ -23,15 +23,17 @@ JSON Mate 是一个面向真实调试场景的 JSON 浏览器扩展。它把 JSO
 - 顶层示例数据：便于验证布尔值、时间戳、多行文本、数组、对象、图片链接等常见结构
 - 多语言界面：当前支持 English、简体中文、繁體中文、日本語，扩展内页面可切换，浏览器原生扩展卡片也支持本地化
 - 独立 Toolkit：适合做整段文本的集中转换和清洗
-- GitHub Releases + Cloudflare 托管站点：便于公开分发、版本跟踪和对外展示
+- Chrome Web Store + GitHub Releases + 官方站点：覆盖自动更新、手动安装、版本跟踪和产品说明
 
 ## 安装方式
 
 ### 1. Chrome Web Store
 
-推荐的最终安装方式。通过 Chrome Web Store 安装的扩展会由浏览器自动检查并分发更新。
+推荐安装方式。通过 Chrome Web Store 安装的扩展会由浏览器自动检查并分发更新：
 
-当前仓库已经准备好 GitHub Release 工作流，并为 Chrome Web Store 自动发布预留了 workflow step。完成商店上架和密钥配置后，这条链路即可用起来。
+[安装 JSON Mate](https://chromewebstore.google.com/detail/json-mate/cegkbekhlmeedpafoclfkbnpnncoanhf)
+
+发布 workflow 会在推送与 `package.json` 版本一致的 `vX.Y.Z` tag 后生成 GitHub Release，并把不含 `manifest.key` 的 ZIP 提交到 Chrome Web Store。
 
 ### 2. GitHub Releases
 
@@ -81,8 +83,8 @@ JSON Mate 是一个面向真实调试场景的 JSON 浏览器扩展。它把 JSO
 ## 版本与发布
 
 - 扩展版本使用严格 `x.y.z` 的 SemVer 形式
-- 发布包文件名与 `package.json` 版本保持一致，例如 `json-mate-v0.4.0.zip`
-- GitHub Release workflow 以 `vX.Y.Z` tag 为发布触发源
+- 发布包文件名与 `package.json` 版本保持一致，例如 `json-mate-v0.4.2.zip`
+- Release workflow 以 `vX.Y.Z` tag 为触发源，同时创建 GitHub Release 并提交 Chrome Web Store 审核
 - Cloudflare 托管站点用于展示功能、安装方式和下载入口
 
 ## 更新策略
@@ -103,6 +105,7 @@ JSON Mate 的核心能力是识别并渲染页面中的 JSON 内容，以及提�
 
 - 项目仓库：`https://github.com/etng/crxJsonMate`
 - Releases：`https://github.com/etng/crxJsonMate/releases`
+- Chrome Web Store：`https://chromewebstore.google.com/detail/json-mate/cegkbekhlmeedpafoclfkbnpnncoanhf`
 - 官方站点：`https://json-mate.0o666.xyz/`
 - 反馈问题：`https://github.com/etng/crxJsonMate/issues/new/choose`
 - 隐私说明：`https://json-mate.0o666.xyz/privacy.html`
