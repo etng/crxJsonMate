@@ -253,6 +253,35 @@ select {
   color: var(--text-main);
 }
 
+.selectControl:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.fontPreview {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(15, 118, 110, 0.14);
+  border-radius: var(--radius-md);
+  background: rgba(248, 252, 250, 0.92);
+}
+
+.fontPreview span {
+  color: var(--text-soft);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fontPreview code {
+  color: var(--accent-deep);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
 .supportList {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

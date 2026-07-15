@@ -2,6 +2,11 @@ import { browser } from '#imports';
 import { startTransition, useDeferredValue, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import type { JsonMateRuntimeMessage } from '@/core/messaging/messages';
+import {
+  buildCodeFontFamilyStack,
+  getCodeFontLineHeightCssValue,
+  getCodeFontSizeCssValue
+} from '@/core/settings/fonts';
 import { defaultSettings, type JsonMateSettings } from '@/core/settings/schema';
 import { loadSettings, saveSettings } from '@/core/settings/storage';
 import {
@@ -1179,6 +1184,26 @@ export function App() {
 
   const lang = settings?.lang || 'en';
   const messages = getViewerMessages(lang);
+
+  useEffect(() => {
+    if (!settings) {
+      return;
+    }
+
+    document.documentElement.style.setProperty(
+      '--viewer-mono',
+      buildCodeFontFamilyStack(settings.fontFamily)
+    );
+    document.documentElement.style.setProperty(
+      '--viewer-code-size',
+      getCodeFontSizeCssValue(settings.fontSize)
+    );
+    document.documentElement.style.setProperty(
+      '--viewer-code-line-height',
+      getCodeFontLineHeightCssValue(settings.fontSize)
+    );
+  }, [settings]);
+
   const isActionConfirmed = (actionId: ViewerActionFeedbackId) => confirmedActionId === actionId;
   const getActionFeedbackLabel = (actionId: ViewerActionFeedbackId, idleLabel: string, confirmedLabel: string) => (
     isActionConfirmed(actionId) ? confirmedLabel : idleLabel

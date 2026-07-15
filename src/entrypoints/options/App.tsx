@@ -1,10 +1,17 @@
 import { startTransition, useEffect, useEffectEvent, useRef, useState } from 'react';
 import {
   defaultSettings,
-  fontOptions,
   languageOptions,
   type JsonMateSettings
 } from '@/core/settings/schema';
+import {
+  buildCodeFontFamilyStack,
+  detectAvailableLocalFonts,
+  fallbackFontFamily,
+  genericFontFamilies,
+  getCodeFontSizeCssValue,
+  type LocalFontCandidate
+} from '@/core/settings/fonts';
 import { loadSettings, saveSettings } from '@/core/settings/storage';
 import { getOptionMessages } from './messages';
 import './style.css';
@@ -100,20 +107,24 @@ function RadioGroup<T extends string>(props: {
 }
 
 function SelectField<T extends string>(props: {
+  description?: string;
+  disabled?: boolean;
   label: string;
   value: T;
   options: ReadonlyArray<{ value: T; label: string }> | ReadonlyArray<string>;
   onChange: (value: T) => void;
 }) {
-  const { label, value, options, onChange } = props;
+  const { description, disabled = false, label, value, options, onChange } = props;
 
   return (
     <div className="fieldBlock">
       <label className="fieldLabel">
         <strong>{label}</strong>
+        {description && <small>{description}</small>}
       </label>
       <select
         className="selectControl"
+        disabled={disabled}
         onChange={(event) => onChange(event.target.value as T)}
         value={value}
       >
@@ -140,6 +151,8 @@ function SelectField<T extends string>(props: {
 export function App() {
   const [settings, setSettings] = useState<JsonMateSettings>(defaultSettings);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [availableLocalFonts, setAvailableLocalFonts] = useState<readonly LocalFontCandidate[]>([]);
+  const [isFontDetectionComplete, setIsFontDetectionComplete] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const saveTimerRef = useRef<number | null>(null);
 
@@ -147,19 +160,42 @@ export function App() {
 
   const applyPagePresentation = useEffectEvent((nextSettings: JsonMateSettings) => {
     document.documentElement.lang = nextSettings.lang;
-    document.documentElement.style.setProperty(
-      '--body-font',
-      `"${nextSettings.fontFamily}", "Avenir Next", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif`
-    );
-    document.title = messages.title;
+    document.title = getOptionMessages(nextSettings.lang).title;
   });
 
   useEffect(() => {
+    let cancelled = false;
+
     void (async () => {
-      const loadedSettings = await loadSettings();
-      setSettings(loadedSettings);
+      const [loadedSettings, detectedFonts] = await Promise.all([
+        loadSettings().catch(() => ({ ...defaultSettings })),
+        detectAvailableLocalFonts()
+      ]);
+      const availableValues = new Set([
+        ...genericFontFamilies,
+        ...detectedFonts.map((candidate) => candidate.value)
+      ]);
+      const nextSettings = availableValues.has(loadedSettings.fontFamily)
+        ? loadedSettings
+        : { ...loadedSettings, fontFamily: fallbackFontFamily };
+
+      if (nextSettings.fontFamily !== loadedSettings.fontFamily) {
+        await saveSettings({ fontFamily: fallbackFontFamily }).catch(() => null);
+      }
+
+      if (cancelled) {
+        return;
+      }
+
+      setAvailableLocalFonts(detectedFonts);
+      setSettings(nextSettings);
+      setIsFontDetectionComplete(true);
       setIsLoaded(true);
     })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -200,6 +236,28 @@ export function App() {
     : saveState === 'saved'
       ? messages.statusSaved
       : '';
+
+  const fontSelectOptions = [
+    { value: fallbackFontFamily, label: messages.fontBrowserDefault },
+    ...genericFontFamilies
+      .filter((fontFamily) => fontFamily !== fallbackFontFamily)
+      .map((fontFamily) => ({
+        value: fontFamily,
+        label: `${fontFamily} · ${messages.fontGenericFamily}`
+      })),
+    ...availableLocalFonts.map((candidate) => ({
+      value: candidate.value,
+      label: candidate.label
+    }))
+  ];
+  const displayedFontFamily = isFontDetectionComplete
+    ? settings.fontFamily
+    : fallbackFontFamily;
+  const fontSizeSelectOptions = [
+    { value: 'compact', label: messages.fontSizeCompact },
+    { value: 'comfortable', label: messages.fontSizeComfortable },
+    { value: 'large', label: messages.fontSizeLarge }
+  ] as const;
 
   const closeOptionsPage = useEffectEvent(async () => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -367,11 +425,35 @@ export function App() {
           />
 
           <SelectField
+            description={isFontDetectionComplete
+              ? messages.fontFamilyDesc
+              : messages.fontFamilyDetecting}
+            disabled={!isFontDetectionComplete}
             label={messages.fontFamily}
             onChange={(value) => void persistSetting('fontFamily', value)}
-            options={fontOptions}
-            value={settings.fontFamily}
+            options={fontSelectOptions}
+            value={displayedFontFamily}
           />
+
+          <SelectField
+            description={messages.fontSizeDesc}
+            label={messages.fontSize}
+            onChange={(value) => void persistSetting('fontSize', value)}
+            options={fontSizeSelectOptions}
+            value={settings.fontSize}
+          />
+
+          <div className="fontPreview" aria-label={messages.fontPreviewLabel}>
+            <span>{messages.fontPreviewLabel}</span>
+            <code
+              style={{
+                fontFamily: buildCodeFontFamilyStack(settings.fontFamily),
+                fontSize: getCodeFontSizeCssValue(settings.fontSize)
+              }}
+            >
+              {'{"jsonMate": true, "count": 3}'}
+            </code>
+          </div>
 
           <SelectField
             label={messages.language}

@@ -9,6 +9,8 @@
   --viewer-accent-soft: color-mix(in srgb, white 88%, var(--viewer-accent) 12%);
   --viewer-shadow: 0 28px 60px rgba(16, 24, 40, 0.12);
   --viewer-mono: "SFMono-Regular", "Cascadia Code", Consolas, monospace;
+  --viewer-code-size: 1rem;
+  --viewer-code-line-height: 1.625rem;
   --viewer-ui-surface: color-mix(in srgb, white 94%, var(--viewer-accent) 6%);
   --viewer-ui-surface-strong: color-mix(in srgb, white 88%, var(--viewer-accent) 12%);
   --viewer-ui-surface-active: color-mix(in srgb, white 80%, var(--viewer-accent) 20%);
@@ -423,7 +425,9 @@ textarea {
 
 .viewerSearchPath {
   display: block;
-  font: 13px/1.5 var(--viewer-mono);
+  font-family: var(--viewer-mono);
+  font-size: var(--viewer-code-size);
+  line-height: var(--viewer-code-line-height);
   word-break: break-word;
 }
 
@@ -437,6 +441,8 @@ textarea {
 .viewerSearchPreview {
   min-width: 0;
   color: var(--viewer-muted);
+  font-family: var(--viewer-mono);
+  font-size: var(--viewer-code-size);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -728,7 +734,9 @@ textarea {
   padding: 10px 12px;
   background: linear-gradient(180deg, var(--viewer-ui-surface), var(--viewer-ui-surface-strong));
   color: var(--viewer-ui-ink);
-  font: 13px/1.5 var(--viewer-mono);
+  font-family: var(--viewer-mono);
+  font-size: var(--viewer-code-size);
+  line-height: var(--viewer-code-line-height);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
 }
 
@@ -974,10 +982,17 @@ textarea {
   overflow: auto;
 }
 
+.jmTree {
+  font-family: var(--viewer-mono);
+  font-size: var(--viewer-code-size);
+}
+
 .viewerPreview pre,
 .viewerTextarea {
   margin: 0;
-  font: 13px/1.6 var(--viewer-mono);
+  font-family: var(--viewer-mono);
+  font-size: var(--viewer-code-size);
+  line-height: var(--viewer-code-line-height);
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -1260,11 +1275,17 @@ textarea {
 }
 
 .jmTreeArea {
-  height: 100vh;
-  overflow: auto;
+  min-height: 100vh;
+  height: auto;
+  overflow: visible;
   box-sizing: border-box;
-  padding: 1.4em 1.25em 3.2em;
-  font-size: 13px;
+  padding: 12px 12px 24px;
+  font-family: var(--viewer-mono);
+  font-size: var(--viewer-code-size);
+}
+
+.jmTreeArea > .jmTree {
+  margin-top: 0;
 }
 
 .jmTree {
@@ -1285,15 +1306,15 @@ textarea {
 
 .jmTree.folderIcons .treeRow {
   padding: 0 0 0 20px;
-  background: url(/icons/tree/folder-object-closed.svg) no-repeat 2px 0 / 24px 22px;
+  background: url(/icons/tree/folder-object-closed.svg) no-repeat 2px 0 / 24px var(--viewer-code-line-height);
 }
 
 .jmTree.folderIcons .node .treeRow {
-  background: url(/icons/tree/leaf-item.svg) no-repeat 2px 0 / 24px 22px;
+  background: url(/icons/tree/leaf-item.svg) no-repeat 2px 0 / 24px var(--viewer-code-line-height);
 }
 
 .jmTree.folderIcons .open > .row > .treeRow {
-  background: url(/icons/tree/folder-object-open.svg) no-repeat 2px 0 / 24px 22px;
+  background: url(/icons/tree/folder-object-open.svg) no-repeat 2px 0 / 24px var(--viewer-code-line-height);
 }
 
 .jmTree.noIcons.folderIcons .treeRow,
@@ -1305,7 +1326,7 @@ textarea {
 .jmTree .row {
   position: relative;
   padding: 0 0 0 16px;
-  line-height: 24px;
+  line-height: var(--viewer-code-line-height);
   white-space: nowrap;
   cursor: pointer;
 }
@@ -1334,7 +1355,7 @@ textarea {
 
 .jmTree .treeBranch {
   background: url(/icons/tree/tree-line.svg) repeat-y 0 0;
-  background-size: 16px 22px;
+  background-size: 16px var(--viewer-code-line-height);
 }
 
 .jmTree .treeRow {
@@ -1400,7 +1421,7 @@ textarea {
   left: 2px;
   top: 0;
   width: 12px;
-  height: 22px;
+  height: var(--viewer-code-line-height);
   min-height: 0;
   margin: 0;
   padding: 0;
@@ -1431,12 +1452,12 @@ textarea {
 
 .jmTree .folder {
   background: url(/icons/tree/tree-line.svg) repeat-y 0 0;
-  background-size: 16px 22px;
+  background-size: 16px var(--viewer-code-line-height);
 }
 
 .jmTree .root > .row {
   background: url(/icons/tree/branch-closed-root.svg) no-repeat 0 0;
-  background-size: 16px 22px;
+  background-size: 16px var(--viewer-code-line-height);
 }
 
 .jmTree .root.open > .row {
@@ -1449,7 +1470,7 @@ textarea {
 
 .jmTree .folder > .row {
   background-image: url(/icons/tree/branch-closed.svg);
-  background-size: 16px 22px;
+  background-size: 16px var(--viewer-code-line-height);
 }
 
 .jmTree .treeList > li:last-child,
@@ -1459,32 +1480,32 @@ textarea {
 
 .jmTree .treeList > li.folder:last-child > .row {
   background-image: url(/icons/tree/branch-closed-last.svg);
-  background-size: 16px 22px;
+  background-size: 16px var(--viewer-code-line-height);
 }
 
 .jmTree .treeList > li.node:last-child > .row {
   background-image: url(/icons/tree/leaf-node-last.svg);
-  background-size: 16px 22px;
+  background-size: 16px var(--viewer-code-line-height);
 }
 
 .jmTree .open > .row {
   background-image: url(/icons/tree/branch-open.svg);
-  background-size: 16px 22px;
+  background-size: 16px var(--viewer-code-line-height);
 }
 
 .jmTree .treeList > li.open:last-child > .row {
   background-image: url(/icons/tree/branch-open-last.svg);
-  background-size: 16px 22px;
+  background-size: 16px var(--viewer-code-line-height);
 }
 
 .jmTree .open.root > .row {
   background-image: url(/icons/tree/branch-open.svg);
-  background-size: 16px 22px;
+  background-size: 16px var(--viewer-code-line-height);
 }
 
 .jmTree .node > .row {
   background: url(/icons/tree/leaf-node.svg) no-repeat 0 0;
-  background-size: 16px 22px;
+  background-size: 16px var(--viewer-code-line-height);
 }
 
 .jmTree .value {
@@ -2013,8 +2034,9 @@ textarea {
   border-radius: 18px;
   border: 1px solid rgba(15, 118, 110, 0.16);
   background: rgba(248, 253, 251, 0.9);
-  font-size: 15px;
-  line-height: 1.4;
+  font-family: var(--viewer-mono);
+  font-size: var(--viewer-code-size);
+  line-height: var(--viewer-code-line-height);
   color: #123530;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.46);
 }
@@ -2125,7 +2147,8 @@ textarea {
 
 .pathSearchResultPath {
   display: block;
-  font-size: 13px;
+  font-family: var(--viewer-mono);
+  font-size: var(--viewer-code-size);
   font-weight: 700;
   line-height: 1.45;
   color: #123530;
@@ -2154,7 +2177,8 @@ textarea {
 
 .pathSearchResultValue {
   min-width: 0;
-  font-size: 12px;
+  font-family: var(--viewer-mono);
+  font-size: var(--viewer-code-size);
   line-height: 1.45;
   color: var(--viewer-muted);
   overflow: hidden;
@@ -2264,7 +2288,9 @@ textarea {
   min-height: 100%;
   height: 100%;
   margin: 0;
-  font: 13px/1.6 var(--viewer-mono);
+  font-family: var(--viewer-mono);
+  font-size: var(--viewer-code-size);
+  line-height: var(--viewer-code-line-height);
   white-space: pre-wrap;
   word-break: break-word;
   border-radius: 18px;
@@ -2282,6 +2308,10 @@ textarea {
 
 .jmViewerEditorHighlight::-webkit-scrollbar {
   display: none;
+}
+
+.jmViewerEditorHighlight code {
+  font: inherit;
 }
 
 .jmViewerEditorShell:focus-within .jmViewerEditorHighlight {

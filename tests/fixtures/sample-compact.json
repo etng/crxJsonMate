@@ -1,0 +1,12 @@
+{
+  "ip": "203.0.113.10",
+  "hostname": "example-host.ap-east-1.compute.example.com",
+  "city": "Hong Kong",
+  "region": "Hong Kong",
+  "country": "HK",
+  "loc": "22.2783,114.1747",
+  "org": "AS65536 Example Network",
+  "postal": "999077",
+  "timezone": "Asia/Hong_Kong",
+  "readme": "https://example.com/missingauth"
+}

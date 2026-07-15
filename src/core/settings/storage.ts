@@ -1,5 +1,6 @@
 import { browser } from '#imports';
 import { defaultSettings, type JsonMateSettings } from './schema';
+import { normalizeCodeFontSizeSetting, normalizeFontFamilySetting } from './fonts';
 
 const DEFAULT_SETTING_KEYS = Object.keys(defaultSettings) as Array<keyof JsonMateSettings>;
 
@@ -85,8 +86,11 @@ const normalizeSettingValue = <K extends keyof JsonMateSettings>(
       return Boolean(value) as JsonMateSettings[K];
     case 'launchCount':
       return (typeof value === 'number' ? value : Number(value) || 0) as JsonMateSettings[K];
-    case 'treeIconStyle':
     case 'fontFamily':
+      return normalizeFontFamilySetting(value) as JsonMateSettings[K];
+    case 'fontSize':
+      return normalizeCodeFontSizeSetting(value) as JsonMateSettings[K];
+    case 'treeIconStyle':
       return String(value ?? defaultSettings[settingKey]) as JsonMateSettings[K];
     default:
       return value as JsonMateSettings[K];

@@ -1,3 +1,5 @@
+import type { CodeFontSize } from './fonts';
+
 export interface JsonMateSettings {
   autoRenderEnabled: boolean;
   lang: 'en' | 'zh-cn' | 'zh-tw' | 'ja';
@@ -18,6 +20,7 @@ export interface JsonMateSettings {
   minimalism: boolean;
   showTextFormat: boolean;
   fontFamily: string;
+  fontSize: CodeFontSize;
   minimalismTrigger: 'always' | 'largePayloadOnly';
   jsonEngine: 'JM-JSON' | 'JSON';
   sortKey: boolean | number;
@@ -34,20 +37,21 @@ export const defaultSettings: JsonMateSettings = {
   panelMode: 'leftClick',
   showTreeValues: true,
   showLinkButtons: true,
-  showTypeIcons: false,
-  treeIconStyle: '',
-  showArrayIndexes: false,
+  showTypeIcons: true,
+  treeIconStyle: 'folder',
+  showArrayIndexes: true,
   showImages: true,
   showImageMode: 'all',
   openViewerMode: 'tab',
   detachedViewerMode: 'tab',
-  showArrayLength: false,
+  showArrayLength: true,
   showLengthMode: 'array',
   renderMode: 'rich',
   rememberNodeState: true,
   minimalism: true,
   showTextFormat: false,
   fontFamily: 'Tahoma',
+  fontSize: 'comfortable',
   minimalismTrigger: 'largePayloadOnly',
   jsonEngine: 'JM-JSON',
   sortKey: 0,
@@ -64,14 +68,3 @@ export const languageOptions: Array<{ value: JsonMateSettings['lang']; label: st
   { value: 'ja', label: '日本語' },
   { value: 'en', label: 'English' }
 ];
-
-export const fontOptions = [
-  'Tahoma',
-  'fantasy',
-  'cursive',
-  'Microsoft Yahei',
-  'Helvetica',
-  'Serif',
-  'Consolas',
-  'monospace'
-] as const;

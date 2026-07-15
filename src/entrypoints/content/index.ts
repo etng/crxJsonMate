@@ -8,6 +8,12 @@ import {
   type JsonLikeApi,
   type RawPayloadResult
 } from '@/core/detector/raw-payload';
+import {
+  buildCodeFontFamilyStack,
+  getCodeFontLineHeightCssValue,
+  getCodeFontSizeCssValue
+} from '@/core/settings/fonts';
+import { createEmbeddedViewerHostMessageHandler } from '@/core/viewer/embedded-host';
 import { loadSettings, saveSettings } from '@/core/settings/storage';
 import type { JsonMateRuntimeMessage } from '@/core/messaging/messages';
 
@@ -252,7 +258,9 @@ export default defineContentScript({
         'box-sizing:border-box',
         'background:#fcfcff',
         'color:#2d47a2',
-        `font-family:${settings.fontFamily}, "SFMono-Regular", Consolas, monospace`
+        `font-family:${buildCodeFontFamilyStack(settings.fontFamily)}`,
+        `font-size:${getCodeFontSizeCssValue(settings.fontSize)}`,
+        `line-height:${getCodeFontLineHeightCssValue(settings.fontSize)}`
       ].join(';');
 
       const pre = document.createElement('pre');
@@ -260,7 +268,6 @@ export default defineContentScript({
       pre.style.margin = '0';
       pre.style.whiteSpace = 'pre-wrap';
       pre.style.wordBreak = 'break-word';
-      pre.style.lineHeight = '1.6';
 
       const style = document.createElement('style');
       style.textContent = [
@@ -326,7 +333,7 @@ export default defineContentScript({
         const frame = document.createElement('iframe');
         const payloadRetryTimers: number[] = [];
         let viewerBooted = false;
-        let cleanupViewerMessage: () => void = () => {};
+        let stopViewerBridge: () => void = () => {};
         const postPayloadToFrame = () => {
           frame.contentWindow?.postMessage({
             cmd: 'postJson',
@@ -338,7 +345,7 @@ export default defineContentScript({
             return;
           }
 
-          cleanupViewerMessage();
+          stopViewerBridge();
           frame.remove();
           void openTopLevelViewerFallback();
         };
@@ -348,35 +355,31 @@ export default defineContentScript({
           }
           payloadRetryTimers.push(window.setTimeout(runTopLevelViewerFallback, 800));
         };
-        cleanupViewerMessage = () => {
-          window.removeEventListener('message', handleViewerMessage);
+        const clearPayloadRetryTimers = () => {
           for (const timerId of payloadRetryTimers) {
             window.clearTimeout(timerId);
           }
+          payloadRetryTimers.length = 0;
         };
-
-        const handleViewerMessage = (event: MessageEvent) => {
-          if (event.origin !== extensionOrigin) {
-            return;
-          }
-
-          if (event.data?.cmd === 'viewerLoadedOk') {
+        const handleViewerMessage = createEmbeddedViewerHostMessageHandler(extensionOrigin, {
+          getViewerWindow: () => frame.contentWindow,
+          onViewerReady: () => {
             viewerBooted = true;
             hideLoadingTip();
             postPayloadToFrame();
-            return;
-          }
-
-          if (event.data?.cmd === 'viewerPayloadLoaded') {
+          },
+          onPayloadLoaded: () => {
             hideLoadingTip();
-            cleanupViewerMessage();
-            return;
+            clearPayloadRetryTimers();
+          },
+          onViewerError: (message) => {
+            tip.textContent = `JSON Mate error: ${message}`;
+            stopViewerBridge();
           }
-
-          if (event.data?.cmd === 'viewerLoadedError') {
-            tip.textContent = `JSON Mate error: ${String(event.data.msg || 'Unknown error')}`;
-            cleanupViewerMessage();
-          }
+        });
+        stopViewerBridge = () => {
+          window.removeEventListener('message', handleViewerMessage);
+          clearPayloadRetryTimers();
         };
 
         window.addEventListener('message', handleViewerMessage);
@@ -388,7 +391,6 @@ export default defineContentScript({
         payloadRetryTimers.push(window.setTimeout(() => {
           runTopLevelViewerFallback();
         }, 4000));
-        payloadRetryTimers.push(window.setTimeout(cleanupViewerMessage, 10000));
         frame.addEventListener('load', queuePayloadRetries, { once: true });
         frame.src = getViewerUrl();
         frame.style.cssText = [
