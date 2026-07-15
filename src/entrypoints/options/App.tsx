@@ -1,5 +1,17 @@
 import { startTransition, useEffect, useEffectEvent, useRef, useState } from 'react';
 import {
+  BackupValidationError,
+  maxJsonMateBackupBytes,
+  parseJsonMateBackupText,
+  serializeJsonMateBackup,
+  type BackupValidationErrorCode
+} from '@/core/backup/schema';
+import {
+  createJsonMateBackup,
+  getJsonMateBackupFilename,
+  restoreJsonMateBackup
+} from '@/core/backup/storage';
+import {
   defaultSettings,
   languageOptions,
   type JsonMateSettings
@@ -17,6 +29,14 @@ import { getOptionMessages } from './messages';
 import './style.css';
 
 type SaveState = 'idle' | 'saving' | 'saved';
+type BackupState =
+  | 'idle'
+  | 'exporting'
+  | 'exported'
+  | 'importing'
+  | 'imported'
+  | 'error'
+  | BackupValidationErrorCode;
 
 const supportLinks = [
   {
@@ -149,12 +169,15 @@ function SelectField<T extends string>(props: {
 }
 
 export function App() {
+  const extensionVersion = browser.runtime.getManifest().version;
   const [settings, setSettings] = useState<JsonMateSettings>(defaultSettings);
   const [isLoaded, setIsLoaded] = useState(false);
   const [availableLocalFonts, setAvailableLocalFonts] = useState<readonly LocalFontCandidate[]>([]);
   const [isFontDetectionComplete, setIsFontDetectionComplete] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [backupState, setBackupState] = useState<BackupState>('idle');
   const saveTimerRef = useRef<number | null>(null);
+  const backupFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const messages = getOptionMessages(settings.lang);
 
@@ -258,6 +281,89 @@ export function App() {
     { value: 'comfortable', label: messages.fontSizeComfortable },
     { value: 'large', label: messages.fontSizeLarge }
   ] as const;
+  const isBackupBusy = backupState === 'exporting' || backupState === 'importing';
+  const backupStatusText = backupState === 'exporting'
+    ? messages.backupExporting
+    : backupState === 'exported'
+      ? messages.backupExported
+      : backupState === 'importing'
+        ? messages.backupImporting
+        : backupState === 'imported'
+          ? messages.backupImported
+          : backupState === 'too-large'
+            ? messages.backupErrorTooLarge
+            : backupState === 'invalid-json'
+              ? messages.backupErrorInvalidJson
+              : backupState === 'invalid-format'
+                ? messages.backupErrorInvalidFormat
+                : backupState === 'unsupported-version'
+                  ? messages.backupErrorUnsupportedVersion
+                  : backupState === 'invalid-data'
+                    ? messages.backupErrorInvalidData
+                    : backupState === 'error'
+                      ? messages.backupErrorGeneric
+                      : '';
+
+  const exportBackup = useEffectEvent(async () => {
+    if (isBackupBusy) {
+      return;
+    }
+
+    setBackupState('exporting');
+    try {
+      const backup = await createJsonMateBackup();
+      const objectUrl = URL.createObjectURL(new Blob(
+        [serializeJsonMateBackup(backup)],
+        { type: 'application/json;charset=utf-8' }
+      ));
+      const downloadLink = document.createElement('a');
+      downloadLink.href = objectUrl;
+      downloadLink.download = getJsonMateBackupFilename();
+      document.body.append(downloadLink);
+      downloadLink.click();
+      downloadLink.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+      setBackupState('exported');
+    } catch {
+      setBackupState('error');
+    }
+  });
+
+  const importBackup = useEffectEvent(async (file: File) => {
+    if (isBackupBusy) {
+      return;
+    }
+    if (file.size > maxJsonMateBackupBytes) {
+      setBackupState('too-large');
+      return;
+    }
+
+    setBackupState('importing');
+    try {
+      const backup = parseJsonMateBackupText(await file.text());
+      if (!window.confirm(messages.backupImportConfirm)) {
+        setBackupState('idle');
+        return;
+      }
+
+      const restoredSettings = await restoreJsonMateBackup(backup);
+      const availableFontValues = new Set([
+        ...genericFontFamilies,
+        ...availableLocalFonts.map((candidate) => candidate.value)
+      ]);
+      const nextSettings = availableFontValues.has(restoredSettings.fontFamily)
+        ? restoredSettings
+        : { ...restoredSettings, fontFamily: fallbackFontFamily };
+      if (nextSettings.fontFamily !== restoredSettings.fontFamily) {
+        await saveSettings({ fontFamily: fallbackFontFamily });
+      }
+
+      setSettings(nextSettings);
+      setBackupState('imported');
+    } catch (error) {
+      setBackupState(error instanceof BackupValidationError ? error.code : 'error');
+    }
+  });
 
   const closeOptionsPage = useEffectEvent(async () => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -311,7 +417,13 @@ export function App() {
         <div className="heroBrand">
           <div aria-hidden="true" className="heroBadge">JM</div>
           <div>
-            <p className="eyebrow">{messages.eyebrow}</p>
+            <div className="heroMeta">
+              <p className="eyebrow">{messages.eyebrow}</p>
+              <span className="versionBadge">
+                <span>{messages.currentVersion}</span>
+                <strong data-extension-version>v{extensionVersion}</strong>
+              </span>
+            </div>
             <h1>{messages.title}</h1>
             <p className="heroCopy">{messages.subtitle}</p>
           </div>
@@ -541,6 +653,65 @@ export function App() {
             <strong>{messages.telemetryScopeTitle}</strong>
             <span>{messages.telemetryScopeDesc}</span>
           </div>
+        </section>
+
+        <section className="card backupCard">
+          <div className="cardHeading">
+            <p className="eyebrow">{messages.sectionBackupEyebrow}</p>
+            <h2>{messages.sectionBackup}</h2>
+          </div>
+
+          <p className="backupDescription">{messages.backupDescription}</p>
+          <div className="backupDetails">
+            <div>
+              <strong>{messages.backupIncludesTitle}</strong>
+              <span>{messages.backupIncludesDesc}</span>
+            </div>
+            <div>
+              <strong>{messages.backupPrivacyTitle}</strong>
+              <span>{messages.backupPrivacyDesc}</span>
+            </div>
+          </div>
+
+          <div className="backupActions">
+            <button
+              className="primaryButton"
+              disabled={isBackupBusy}
+              onClick={() => void exportBackup()}
+              type="button"
+            >
+              {messages.backupExport}
+            </button>
+            <button
+              className="secondaryButton"
+              disabled={isBackupBusy}
+              onClick={() => backupFileInputRef.current?.click()}
+              type="button"
+            >
+              {messages.backupImport}
+            </button>
+            <input
+              accept=".json,application/json"
+              className="visuallyHidden"
+              onChange={(event) => {
+                const selectedFile = event.target.files?.[0];
+                event.target.value = '';
+                if (selectedFile) {
+                  void importBackup(selectedFile);
+                }
+              }}
+              ref={backupFileInputRef}
+              tabIndex={-1}
+              type="file"
+            />
+          </div>
+
+          <p
+            className={`backupStatus${backupStatusText ? '' : ' isHidden'}${backupState === 'error' || backupState.startsWith('invalid') || backupState === 'too-large' || backupState === 'unsupported-version' ? ' isError' : ''}`}
+            aria-live="polite"
+          >
+            {backupStatusText}
+          </p>
         </section>
 
         <aside className="card supportCard">

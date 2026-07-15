@@ -265,6 +265,57 @@ export const loadViewerLibrary = async (): Promise<ViewerLibrarySnapshot> => {
   };
 };
 
+export const normalizeViewerLibrarySnapshot = (snapshot: Partial<ViewerLibrarySnapshot>): ViewerLibrarySnapshot => {
+  const seenRecentUrls = new Set<string>();
+  const recents = sortRecentEntries(
+    (Array.isArray(snapshot.recents) ? snapshot.recents : [])
+      .map(normalizeRecentEntry)
+      .filter(Boolean) as ViewerRecentEntry[]
+  ).filter((entry) => {
+    if (!isHttpUrl(entry.url) || seenRecentUrls.has(entry.url)) {
+      return false;
+    }
+    seenRecentUrls.add(entry.url);
+    return true;
+  }).slice(0, maxViewerRecentEntries);
+
+  const seenCollectionIds = new Set<string>();
+  const collectionNames = new Set<string>([defaultViewerCollectionName]);
+  const collections = sortCollectionEntries(
+    (Array.isArray(snapshot.collections) ? snapshot.collections : [])
+      .map(normalizeCollectionEntry)
+      .filter(Boolean) as ViewerCollectionEntry[]
+  ).filter((entry) => {
+    if (!isHttpUrl(entry.url) || seenCollectionIds.has(entry.id)) {
+      return false;
+    }
+
+    if (!collectionNames.has(entry.collection) && collectionNames.size >= maxViewerCollectionNames) {
+      return false;
+    }
+
+    seenCollectionIds.add(entry.id);
+    collectionNames.add(entry.collection);
+    return true;
+  });
+
+  return { recents, collections };
+};
+
+export const replaceViewerLibrary = async (snapshot: Partial<ViewerLibrarySnapshot>) => {
+  const normalizedSnapshot = normalizeViewerLibrarySnapshot(snapshot);
+  const storageArea = getStorageArea();
+  if (!storageArea) {
+    return normalizedSnapshot;
+  }
+
+  await storageArea.set({
+    [viewerRecentStorageKey]: normalizedSnapshot.recents,
+    [viewerCollectionStorageKey]: normalizedSnapshot.collections
+  });
+  return normalizedSnapshot;
+};
+
 export const recordViewerRecentEntry = async (entry: ViewerRecentEntry) => {
   if (!isHttpUrl(entry.url)) {
     return loadViewerLibrary();

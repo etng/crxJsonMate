@@ -24,6 +24,20 @@ import {
   type ViewerSourceType
 } from '@/core/viewer/library';
 import {
+  readStoredViewerPanelWidth,
+  readViewerMinimalMode,
+  readViewerSearchHistory,
+  readViewerSearchMode,
+  viewerMinimalModeStorageKey,
+  viewerSearchHistoryStorageKey,
+  viewerSearchModeStorageKey,
+  writeStoredViewerPanelWidth,
+  writeViewerMinimalMode,
+  writeViewerSearchHistory,
+  writeViewerSearchMode,
+  type ViewerSearchHistoryEntry
+} from '@/core/viewer/preferences';
+import {
   getJsonHighlightTokens,
   shouldHighlightJsonText
 } from '@/core/viewer/json-highlight';
@@ -69,10 +83,6 @@ const queryParams = new URLSearchParams(window.location.search);
 const initialIframeMode = queryParams.get('type') === 'iframe' || queryParams.get('embedded') === '1';
 const initialTopLevelFallbackMode = queryParams.get('fallback') === 'top-level' && window.parent === window;
 const rootPathKey = getViewerPathKey([]);
-const modernSearchHistoryStorageKey = 'jsonMate.modernViewerSearchHistory.v1';
-const modernSearchModeStorageKey = 'jsonMate.modernViewerSearchMode.v1';
-const modernViewerMinimalModeStorageKey = 'jsonMate.modernViewerMinimalMode.v1';
-const modernViewerPanelWidthStorageKey = 'jsonMate.modernViewerPanelWidth.v1';
 const jmTreeLengthClassName = 'show-array-length';
 const detachedViewerJsonQueryKey = 'json';
 const detachedViewerSourcePathQueryKey = 'sourcePath';
@@ -193,11 +203,6 @@ const resolveDetachedHashViewerState = (
     format: payload.format || 'json'
   }, 'pending', jsonEngine);
 };
-
-interface ViewerSearchHistoryEntry {
-  query: string;
-  mode: ViewerPathSearchMode;
-}
 
 interface ViewerHistoryEntry {
   data: unknown;
@@ -861,97 +866,6 @@ const collectCollapsedStructuredPaths = (
   return nextExpandedPaths;
 };
 
-const readViewerSearchHistory = (): ViewerSearchHistoryEntry[] => {
-  if (typeof window === 'undefined') {
-    return [];
-  }
-
-  try {
-    const raw = window.localStorage.getItem(modernSearchHistoryStorageKey);
-    const parsed = raw ? JSON.parse(raw) : [];
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-
-    return parsed.flatMap((entry): ViewerSearchHistoryEntry[] => {
-      if (typeof entry === 'string') {
-        return [{ query: entry, mode: 'key' as const }];
-      }
-
-      if (!entry || typeof entry !== 'object' || typeof entry.query !== 'string') {
-        return [];
-      }
-
-      return [{
-        query: entry.query,
-        mode: entry.mode === 'value' ? 'value' as const : 'key' as const
-      }];
-    }).slice(0, 12);
-  } catch {
-    return [];
-  }
-};
-
-const writeViewerSearchHistory = (entries: ViewerSearchHistoryEntry[]) => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  try {
-    window.localStorage.setItem(modernSearchHistoryStorageKey, JSON.stringify(entries));
-  } catch {
-    // Ignore storage failures in constrained browser contexts.
-  }
-};
-
-const readViewerSearchMode = (): ViewerPathSearchMode => {
-  if (typeof window === 'undefined') {
-    return 'key';
-  }
-
-  try {
-    return window.localStorage.getItem(modernSearchModeStorageKey) === 'value' ? 'value' : 'key';
-  } catch {
-    return 'key';
-  }
-};
-
-const writeViewerSearchMode = (mode: ViewerPathSearchMode) => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  try {
-    window.localStorage.setItem(modernSearchModeStorageKey, mode);
-  } catch {
-    // Ignore storage failures in constrained browser contexts.
-  }
-};
-
-const readViewerMinimalMode = () => {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  try {
-    return window.localStorage.getItem(modernViewerMinimalModeStorageKey) === 'true';
-  } catch {
-    return false;
-  }
-};
-
-const writeViewerMinimalMode = (enabled: boolean) => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  try {
-    window.localStorage.setItem(modernViewerMinimalModeStorageKey, enabled ? 'true' : 'false');
-  } catch {
-    // Ignore storage failures in constrained browser contexts.
-  }
-};
-
 const getViewerPanelViewportMaxWidth = () => {
   if (typeof window === 'undefined') {
     return viewerPanelDefaultWidth;
@@ -980,30 +894,12 @@ const clampViewerPanelWidth = (width: number) => (
 );
 
 const readViewerPanelWidth = () => {
-  if (typeof window === 'undefined') {
-    return viewerPanelDefaultWidth;
-  }
-
-  try {
-    const storedWidth = Number(window.localStorage.getItem(modernViewerPanelWidthStorageKey));
-    return Number.isFinite(storedWidth)
-      ? clampViewerPanelWidth(storedWidth)
-      : clampViewerPanelWidth(viewerPanelDefaultWidth);
-  } catch {
-    return clampViewerPanelWidth(viewerPanelDefaultWidth);
-  }
+  const storedWidth = readStoredViewerPanelWidth();
+  return clampViewerPanelWidth(storedWidth ?? viewerPanelDefaultWidth);
 };
 
 const writeViewerPanelWidth = (width: number) => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  try {
-    window.localStorage.setItem(modernViewerPanelWidthStorageKey, String(Math.round(clampViewerPanelWidth(width))));
-  } catch {
-    // Ignore storage failures in constrained browser contexts.
-  }
+  writeStoredViewerPanelWidth(clampViewerPanelWidth(width));
 };
 
 const formatViewerInspectorPath = (path: ViewerPath) => (
@@ -2416,17 +2312,17 @@ export function App() {
         return;
       }
 
-      if (event.key === modernViewerMinimalModeStorageKey) {
+      if (event.key === viewerMinimalModeStorageKey) {
         setIsMinimalTreeMode(readViewerMinimalMode());
         return;
       }
 
-      if (event.key === modernSearchModeStorageKey) {
+      if (event.key === viewerSearchModeStorageKey) {
         setPathSearchMode(readViewerSearchMode());
         return;
       }
 
-      if (event.key === modernSearchHistoryStorageKey) {
+      if (event.key === viewerSearchHistoryStorageKey) {
         setPathSearchHistory(readViewerSearchHistory());
       }
     };

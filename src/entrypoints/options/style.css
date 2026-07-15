@@ -89,6 +89,40 @@ select {
   color: var(--accent);
 }
 
+.heroMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 10px;
+}
+
+.heroMeta .eyebrow {
+  margin: 0;
+}
+
+.versionBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 0 9px;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.06);
+  color: var(--text-soft);
+  font-size: 12px;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.versionBadge strong {
+  color: var(--accent-deep);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
 .heroCard h1,
 .card h2 {
   margin: 0;
@@ -312,6 +346,125 @@ select {
   overflow-wrap: anywhere;
 }
 
+.backupDescription {
+  margin: 0;
+  max-width: 68ch;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+.backupDetails {
+  display: grid;
+  gap: 0;
+  margin-top: 18px;
+  border-block: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.backupDetails > div {
+  display: grid;
+  gap: 5px;
+  padding-block: 14px;
+}
+
+.backupDetails > div + div {
+  border-top: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.backupDetails strong {
+  font-size: 14px;
+}
+
+.backupDetails span {
+  color: var(--text-soft);
+  font-size: 13px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.backupActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.primaryButton,
+.secondaryButton {
+  min-height: 42px;
+  border-radius: 999px;
+  padding: 0 18px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+
+.primaryButton {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #f7fffc;
+}
+
+.secondaryButton {
+  border: 1px solid rgba(15, 118, 110, 0.22);
+  background: rgba(255, 255, 255, 0.76);
+  color: var(--accent-deep);
+}
+
+.primaryButton:hover:not(:disabled),
+.secondaryButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: var(--accent-deep);
+}
+
+.secondaryButton:hover:not(:disabled) {
+  border-color: rgba(15, 118, 110, 0.4);
+  background: rgba(240, 250, 247, 0.96);
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+.primaryButton:focus-visible,
+.secondaryButton:focus-visible,
+.ghostButton:focus-visible {
+  outline: 3px solid rgba(15, 118, 110, 0.24);
+  outline-offset: 3px;
+}
+
+.backupStatus {
+  min-height: 22px;
+  margin: 14px 0 0;
+  color: var(--accent-deep);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.backupStatus.isHidden {
+  visibility: hidden;
+}
+
+.backupStatus.isError {
+  color: #a13b2b;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .supportLink:hover {
   border-color: rgba(15, 118, 110, 0.28);
 }
@@ -396,5 +549,14 @@ select {
 
   .toggleRow {
     align-items: flex-start;
+  }
+
+  .backupActions {
+    display: grid;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
   }
 }
