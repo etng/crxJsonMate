@@ -23,7 +23,8 @@
 			"home.hero.download": "安装到 Chrome",
 			"home.hero.installOptions": "其他安装方式",
 			"home.hero.releaseLabel": "当前版本信息",
-			"home.hero.current": "当前版本：v0.4.2",
+			"home.hero.current": "查看最新版本",
+			"home.hero.currentWithVersion": "当前版本：{version}",
 			"home.hero.manual": "Chrome 商店已上架",
 			"home.product.alt": "JSON Mate 工作区，左侧是树形视图，右侧是属性面板、快捷工具和显示选项。",
 			"home.product.caption": "树形视图、属性面板和快捷工具在同一工作区。",
@@ -119,7 +120,8 @@
 			"home.hero.download": "Add to Chrome",
 			"home.hero.installOptions": "Other install options",
 			"home.hero.releaseLabel": "Current release details",
-			"home.hero.current": "Current: v0.4.2",
+			"home.hero.current": "View latest release",
+			"home.hero.currentWithVersion": "Current: {version}",
 			"home.hero.manual": "Available on the Chrome Web Store",
 			"home.product.alt": "JSON Mate workspace with a tree viewer, inspector panel, quick tools and display options.",
 			"home.product.caption": "Tree viewer, inspector and quick tools in one workspace.",
@@ -196,6 +198,7 @@
 			"privacy.feedback.suffix": ". Sanitize sample data before posting.",
 		},
 	};
+	let latestReleaseTag = null;
 
 	const readSavedLanguage = () => {
 		try {
@@ -222,6 +225,18 @@
 
 		const browserLanguages = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language];
 		return browserLanguages.some((language) => String(language).toLowerCase().startsWith("zh")) ? "zh" : "en";
+	};
+
+	const renderLatestRelease = (language) => {
+		if (!latestReleaseTag) {
+			return;
+		}
+
+		const dictionary = messages[language] || messages.zh;
+		const releaseElement = document.querySelector("[data-release-version]");
+		if (releaseElement) {
+			releaseElement.textContent = dictionary["home.hero.currentWithVersion"].replace("{version}", latestReleaseTag);
+		}
 	};
 
 	const applyLanguage = (language, shouldPersist = false) => {
@@ -251,8 +266,36 @@
 			button.setAttribute("aria-pressed", String(isActive));
 		});
 
+		renderLatestRelease(language);
+
 		if (shouldPersist) {
 			writeSavedLanguage(language);
+		}
+	};
+
+	const loadLatestRelease = async () => {
+		if (!document.querySelector("[data-release-version]")) {
+			return;
+		}
+
+		try {
+			const response = await fetch("/api/release", {
+				headers: { accept: "application/json" },
+			});
+			if (!response.ok) {
+				return;
+			}
+
+			const payload = await response.json();
+			if (typeof payload.tagName !== "string" || payload.tagName.length > 64) {
+				return;
+			}
+
+			latestReleaseTag = payload.tagName;
+			const language = document.documentElement.dataset.language || detectLanguage();
+			renderLatestRelease(language);
+		} catch {
+			// Keep the stable “latest release” link when the version service is unavailable.
 		}
 	};
 
@@ -269,4 +312,5 @@
 	});
 
 	applyLanguage(detectLanguage());
+	loadLatestRelease();
 })();
